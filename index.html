@@ -1,0 +1,2375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>Bro's Tracker 💪</title>
+
+<!-- PWA -->
+<link rel="manifest" href="/manifest.json" />
+<meta name="theme-color" content="#00e5a0" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="application-name" content="BroTracker" />
+
+<!-- iOS specific -->
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="apple-mobile-web-app-title" content="BroTracker" />
+<link rel="apple-touch-icon" href="/icons/icon-192.png" />
+
+<!-- Splash / OG -->
+<meta name="description" content="Fitness & habit tracker — June to Dec grind 💪" />
+<link rel="icon" type="image/png" href="/icons/icon-192.png" />
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+<style>
+  :root {
+    --bg: #0d0f14;
+    --surface: #161b22;
+    --card: #1e2530;
+    --border: #2a3140;
+    --accent: #00e5a0;
+    --accent2: #ff6b35;
+    --accent3: #7c5cfc;
+    --text: #e6edf3;
+    --muted: #7d8590;
+    --danger: #f85149;
+    --gold: #e3b341;
+    --silver: #8b949e;
+    --bronze: #d18a45;
+    --radius: 12px;
+    --shadow: 0 4px 24px rgba(0,0,0,0.4);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── LOGIN ── */
+  #loginScreen {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 20px;
+    background: radial-gradient(ellipse at 50% 0%, #0f2027 0%, var(--bg) 70%);
+  }
+
+  .login-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 40px 36px;
+    width: 100%;
+    max-width: 380px;
+    box-shadow: var(--shadow);
+  }
+
+  .login-logo {
+    text-align: center;
+    margin-bottom: 28px;
+  }
+
+  .login-logo .icon { font-size: 52px; }
+  .login-logo h1 {
+    font-size: 26px;
+    font-weight: 800;
+    background: linear-gradient(135deg, var(--accent), var(--accent3));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-top: 8px;
+  }
+
+  .login-logo p { color: var(--muted); font-size: 13px; margin-top: 4px; }
+
+  .form-group { margin-bottom: 18px; }
+  .form-group label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--muted);
+    margin-bottom: 7px;
+  }
+
+  .form-group input, .form-group select {
+    width: 100%;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 14px;
+    color: var(--text);
+    font-size: 15px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  .form-group input:focus, .form-group select:focus {
+    border-color: var(--accent);
+  }
+
+  .btn-primary {
+    width: 100%;
+    padding: 13px;
+    background: linear-gradient(135deg, var(--accent), #00b37e);
+    border: none;
+    border-radius: 8px;
+    color: #0d1117;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.1s;
+    margin-top: 6px;
+  }
+
+  .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+  .btn-primary:active { transform: translateY(0); }
+
+  .login-hint {
+    text-align: center;
+    margin-top: 16px;
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  .error-msg {
+    background: rgba(248,81,73,0.1);
+    border: 1px solid rgba(248,81,73,0.3);
+    border-radius: 8px;
+    padding: 10px 14px;
+    color: var(--danger);
+    font-size: 13px;
+    margin-bottom: 16px;
+    display: none;
+  }
+
+  /* ── APP SHELL ── */
+  #app { display: none; min-height: 100vh; }
+
+  .topbar {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 20px;
+    height: 58px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+
+  .topbar-brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 18px;
+    font-weight: 800;
+  }
+
+  .topbar-brand span.icon { font-size: 22px; }
+
+  .topbar-brand .name {
+    background: linear-gradient(135deg, var(--accent), var(--accent3));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .topbar-right { display: flex; align-items: center; gap: 12px; }
+
+  .user-chip {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 5px 12px 5px 5px;
+    font-size: 13px;
+    font-weight: 600;
+  }
+
+  .avatar {
+    width: 26px; height: 26px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700;
+    color: #0d1117;
+  }
+
+  .btn-logout {
+    background: none;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--muted);
+    padding: 5px 10px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: color 0.2s, border-color 0.2s;
+  }
+
+  .btn-logout:hover { color: var(--danger); border-color: var(--danger); }
+
+  /* ── NAV TABS ── */
+  .nav-tabs {
+    display: flex;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    overflow-x: auto;
+    scrollbar-width: none;
+    padding: 0 16px;
+  }
+
+  .nav-tabs::-webkit-scrollbar { display: none; }
+
+  .nav-tab {
+    padding: 14px 18px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--muted);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: color 0.2s, border-color 0.2s;
+    white-space: nowrap;
+  }
+
+  .nav-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+  .nav-tab:hover:not(.active) { color: var(--text); }
+
+  /* ── MAIN CONTENT ── */
+  .main { padding: 20px 16px; max-width: 600px; margin: 0 auto; }
+
+  .section { display: none; }
+  .section.active { display: block; }
+
+  /* ── CARDS ── */
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 16px;
+  }
+
+  .card-title {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--muted);
+    margin-bottom: 14px;
+  }
+
+  /* ── LEADERBOARD ── */
+  .leaderboard-item {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 14px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    margin-bottom: 10px;
+    transition: transform 0.2s;
+  }
+
+  .leaderboard-item:hover { transform: translateX(3px); }
+
+  .rank-badge {
+    font-size: 20px;
+    width: 32px;
+    text-align: center;
+    flex-shrink: 0;
+  }
+
+  .lb-avatar {
+    width: 42px; height: 42px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; font-weight: 800;
+    color: #0d1117;
+    flex-shrink: 0;
+  }
+
+  .lb-info { flex: 1; min-width: 0; }
+  .lb-name { font-size: 15px; font-weight: 700; }
+  .lb-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+  .lb-score {
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--accent);
+    text-align: right;
+  }
+
+  .lb-score .pts { font-size: 11px; color: var(--muted); font-weight: 400; }
+
+  .streak-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    background: rgba(255,107,53,0.15);
+    border: 1px solid rgba(255,107,53,0.3);
+    border-radius: 20px;
+    padding: 2px 8px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--accent2);
+  }
+
+  /* ── TRASH TALK ── */
+  .trash-card {
+    background: linear-gradient(135deg, rgba(124,92,252,0.1), rgba(0,229,160,0.05));
+    border: 1px solid rgba(124,92,252,0.3);
+    border-radius: var(--radius);
+    padding: 20px;
+    margin-bottom: 16px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .trash-card::before {
+    content: '🗣️';
+    position: absolute;
+    right: 16px;
+    top: 16px;
+    font-size: 28px;
+    opacity: 0.3;
+  }
+
+  .trash-label {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: var(--accent3);
+    margin-bottom: 8px;
+  }
+
+  .trash-text {
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1.5;
+    color: var(--text);
+  }
+
+  /* ── LOG FORM ── */
+  .log-date-header {
+    text-align: center;
+    margin-bottom: 20px;
+  }
+
+  .log-date-header .date-display {
+    font-size: 22px;
+    font-weight: 800;
+    color: var(--accent);
+  }
+
+  .log-date-header .date-sub { font-size: 13px; color: var(--muted); margin-top: 2px; }
+
+  .toggle-group { display: flex; gap: 8px; flex-wrap: wrap; }
+
+  .toggle-btn {
+    flex: 1;
+    min-width: 80px;
+    padding: 10px 14px;
+    border: 1.5px solid var(--border);
+    border-radius: 8px;
+    background: var(--surface);
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-align: center;
+  }
+
+  .toggle-btn.selected-yes {
+    background: rgba(0,229,160,0.1);
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+
+  .toggle-btn.selected-no {
+    background: rgba(248,81,73,0.1);
+    border-color: var(--danger);
+    color: var(--danger);
+  }
+
+  .toggle-btn.selected-activity {
+    background: rgba(124,92,252,0.1);
+    border-color: var(--accent3);
+    color: var(--accent3);
+  }
+
+  .toggle-btn.selected-bad {
+    background: rgba(248,81,73,0.1);
+    border-color: var(--danger);
+    color: var(--danger);
+  }
+
+  .points-preview {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px;
+    margin-top: 16px;
+    margin-bottom: 16px;
+  }
+
+  .points-preview .row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 4px 0;
+    font-size: 13px;
+  }
+
+  .points-preview .row .label { color: var(--muted); }
+  .points-preview .row .val { font-weight: 700; }
+  .points-preview .row .val.pos { color: var(--accent); }
+  .points-preview .row .val.neg { color: var(--danger); }
+  .points-preview .row .val.bonus { color: var(--gold); }
+  .points-preview .divider { border-top: 1px solid var(--border); margin: 8px 0; }
+  .points-preview .total { font-size: 16px; font-weight: 800; }
+
+  .btn-log {
+    width: 100%;
+    padding: 14px;
+    background: linear-gradient(135deg, var(--accent), #00b37e);
+    border: none;
+    border-radius: 8px;
+    color: #0d1117;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.1s;
+  }
+
+  .btn-log:hover { opacity: 0.9; transform: translateY(-1px); }
+  .btn-log:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+  .already-logged {
+    background: rgba(0,229,160,0.08);
+    border: 1px solid rgba(0,229,160,0.25);
+    border-radius: 10px;
+    padding: 16px;
+    text-align: center;
+    color: var(--accent);
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  .date-nav {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+
+  .date-nav button {
+    background: var(--card);
+    border: 1px solid var(--border);
+    color: var(--text);
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background 0.15s;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  .date-nav button:hover { background: var(--border); }
+  .date-nav button:disabled { opacity: 0.3; cursor: not-allowed; }
+
+  .date-nav .date-label { font-size: 14px; font-weight: 700; min-width: 120px; text-align: center; }
+
+  /* ── HISTORY ── */
+  .history-entry {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin-bottom: 10px;
+  }
+
+  .history-entry .he-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+
+  .he-date { font-size: 13px; font-weight: 700; }
+  .he-pts { font-size: 16px; font-weight: 800; }
+  .he-pts.pos { color: var(--accent); }
+  .he-pts.neg { color: var(--danger); }
+
+  .he-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+
+  .tag {
+    padding: 3px 9px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+
+  .tag-gym { background: rgba(0,229,160,0.1); color: var(--accent); border: 1px solid rgba(0,229,160,0.25); }
+  .tag-activity { background: rgba(124,92,252,0.1); color: var(--accent3); border: 1px solid rgba(124,92,252,0.25); }
+  .tag-bad { background: rgba(248,81,73,0.1); color: var(--danger); border: 1px solid rgba(248,81,73,0.25); }
+  .tag-clean { background: rgba(227,179,65,0.1); color: var(--gold); border: 1px solid rgba(227,179,65,0.3); }
+  .tag-streak { background: rgba(255,107,53,0.1); color: var(--accent2); border: 1px solid rgba(255,107,53,0.25); }
+  .tag-penalty { background: rgba(248,81,73,0.05); color: var(--danger); border: 1px dashed rgba(248,81,73,0.3); }
+
+  /* ── STATS ── */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+
+  .stat-tile {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px;
+    text-align: center;
+  }
+
+  .stat-tile .st-val {
+    font-size: 28px;
+    font-weight: 800;
+    line-height: 1.1;
+  }
+
+  .stat-tile .st-label {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 4px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .progress-bar-wrap {
+    background: var(--surface);
+    border-radius: 4px;
+    height: 6px;
+    overflow: hidden;
+    margin-top: 8px;
+  }
+
+  .progress-bar-fill {
+    height: 100%;
+    border-radius: 4px;
+    transition: width 0.5s ease;
+  }
+
+  /* ── SCORING RULES ── */
+  .rules-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+  }
+
+  .rules-item:last-child { border-bottom: none; }
+  .rules-item .ri-label { color: var(--text); }
+  .rules-item .ri-pts { font-weight: 700; }
+  .ri-pts.pos { color: var(--accent); }
+  .ri-pts.neg { color: var(--danger); }
+  .ri-pts.bonus { color: var(--gold); }
+  .ri-pts.orange { color: var(--accent2); }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 420px) {
+    .main { padding: 14px 12px; }
+    .topbar { padding: 0 12px; }
+    .nav-tab { padding: 12px 14px; }
+    .lb-score { font-size: 18px; }
+    .stats-grid { grid-template-columns: 1fr 1fr; }
+  }
+
+  /* ── ANIMATIONS ── */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .card, .leaderboard-item, .history-entry {
+    animation: fadeUp 0.3s ease both;
+  }
+
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 20px;
+    font-size: 14px;
+    font-weight: 600;
+    z-index: 999;
+    box-shadow: var(--shadow);
+    transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+    pointer-events: none;
+    white-space: nowrap;
+  }
+
+  .toast.show { transform: translateX(-50%) translateY(0); }
+  .toast.success { border-color: var(--accent); color: var(--accent); }
+  .toast.error { border-color: var(--danger); color: var(--danger); }
+
+  /* ── CHART ── */
+  .chart-wrap { width: 100%; overflow-x: auto; }
+  .chart-wrap svg { display: block; }
+  .chart-legend { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 10px; }
+  .chart-legend-item { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; }
+  .chart-legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+
+  /* ── APPROVALS ── */
+  .approval-card {
+    background: var(--card);
+    border: 1px solid rgba(227,179,65,0.4);
+    border-radius: var(--radius);
+    padding: 16px;
+    margin-bottom: 10px;
+  }
+
+  .approval-card .ap-top {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+
+  .ap-info { flex: 1; }
+  .ap-name { font-size: 14px; font-weight: 700; }
+  .ap-activity {
+    font-size: 13px;
+    color: var(--accent3);
+    font-weight: 600;
+    margin-top: 2px;
+  }
+  .ap-date { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+  .ap-actions { display: flex; gap: 8px; margin-top: 4px; }
+
+  .btn-approve {
+    flex: 1;
+    padding: 9px;
+    background: rgba(0,229,160,0.1);
+    border: 1px solid rgba(0,229,160,0.35);
+    border-radius: 8px;
+    color: var(--accent);
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .btn-approve:hover { background: rgba(0,229,160,0.2); }
+
+  .btn-reject {
+    flex: 1;
+    padding: 9px;
+    background: rgba(248,81,73,0.1);
+    border: 1px solid rgba(248,81,73,0.3);
+    border-radius: 8px;
+    color: var(--danger);
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  .btn-reject:hover { background: rgba(248,81,73,0.2); }
+
+  .ap-voted {
+    font-size: 12px;
+    font-weight: 600;
+    padding: 8px 12px;
+    border-radius: 8px;
+    text-align: center;
+    margin-top: 4px;
+  }
+  .ap-voted.approved { background: rgba(0,229,160,0.08); color: var(--accent); }
+  .ap-voted.rejected { background: rgba(248,81,73,0.08); color: var(--danger); }
+  .ap-voted.pending  { background: rgba(227,179,65,0.08); color: var(--gold); }
+
+  /* ── AWARDS ── */
+  .awards-tally {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+
+  .tally-card {
+    flex: 1;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 12px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .tally-card.rank-1 { border-color: rgba(227,179,65,0.5); background: rgba(227,179,65,0.07); }
+  .tally-card.rank-2 { border-color: rgba(139,148,158,0.4); background: rgba(139,148,158,0.05); }
+  .tally-card.rank-3 { border-color: rgba(209,138,69,0.4); background: rgba(209,138,69,0.05); }
+
+  .tally-avatar {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px; font-weight: 800;
+    color: #0d1117;
+    margin: 0 auto 8px;
+  }
+
+  .tally-name { font-size: 13px; font-weight: 700; }
+  .tally-count { font-size: 28px; font-weight: 800; line-height: 1.1; margin-top: 2px; }
+  .tally-label { font-size: 10px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+  .tally-crown { font-size: 18px; margin-bottom: 4px; }
+
+  .week-row {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin-bottom: 8px;
+  }
+
+  .week-row.current-week {
+    border-color: rgba(0,229,160,0.35);
+    background: rgba(0,229,160,0.04);
+  }
+
+  .week-row-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+
+  .week-label { font-size: 12px; font-weight: 700; color: var(--muted); }
+  .week-label .wk-num { color: var(--text); font-size: 13px; }
+  .week-badge-live {
+    font-size: 10px;
+    font-weight: 700;
+    background: rgba(0,229,160,0.15);
+    color: var(--accent);
+    border: 1px solid rgba(0,229,160,0.3);
+    border-radius: 20px;
+    padding: 2px 8px;
+    letter-spacing: 0.5px;
+  }
+
+  .week-scores {
+    display: flex;
+    gap: 8px;
+  }
+
+  .ws-item {
+    flex: 1;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 6px;
+    text-align: center;
+    position: relative;
+  }
+
+  .ws-item.winner {
+    border-color: rgba(227,179,65,0.5);
+    background: rgba(227,179,65,0.07);
+  }
+
+  .ws-item.winner::after {
+    content: '👑';
+    position: absolute;
+    top: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 14px;
+  }
+
+  .ws-name { font-size: 11px; color: var(--muted); font-weight: 600; margin-bottom: 2px; }
+  .ws-score { font-size: 15px; font-weight: 800; }
+  .ws-score.pos { color: var(--accent); }
+  .ws-score.zero { color: var(--muted); }
+  .ws-score.neg { color: var(--danger); }
+
+  .no-weeks {
+    text-align: center;
+    padding: 30px 0;
+    color: var(--muted);
+    font-size: 14px;
+  }
+
+  /* scrollbar */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+</style>
+</head>
+<body>
+
+<!-- ── LOADING ── -->
+<div id="loadingScreen" style="display:flex;align-items:center;justify-content:center;min-height:100vh;background:var(--bg);flex-direction:column;gap:16px;">
+  <div style="font-size:48px;">🏋️</div>
+  <div style="font-size:16px;font-weight:700;color:var(--accent);">Bro's Tracker</div>
+  <div style="font-size:13px;color:var(--muted);">Connecting to database...</div>
+</div>
+
+<!-- ── LOGIN ── -->
+<div id="loginScreen" style="display:none">
+  <div class="login-box">
+    <div class="login-logo">
+      <div class="icon">🏋️</div>
+      <h1>Bro's Tracker</h1>
+      <p>June 1 → Dec 31, 2026 · The Grind Season</p>
+    </div>
+    <div class="error-msg" id="loginError">Wrong username or password. Try again.</div>
+    <div class="form-group">
+      <label>Username</label>
+      <input type="text" id="loginUser" placeholder="Enter your name" autocomplete="username" />
+    </div>
+    <div class="form-group">
+      <label>Password (Date of Birth)</label>
+      <input type="password" id="loginPass" placeholder="DDMM" autocomplete="current-password" />
+    </div>
+    <button class="btn-primary" onclick="doLogin()">Enter the Arena 🔥</button>
+    <p class="login-hint">Password = your personal password (DOB on first login)</p>
+    <p style="text-align:center;margin-top:12px;">
+      <span onclick="showForgotPassword()" style="font-size:12px;color:var(--accent3);cursor:pointer;text-decoration:underline;">Forgot password? Reset using DOB</span>
+    </p>
+  </div>
+</div>
+
+<!-- ── FORGOT PASSWORD ── -->
+<div id="forgotPassScreen" style="display:none;align-items:center;justify-content:center;min-height:100vh;padding:20px;background:radial-gradient(ellipse at 50% 0%, #0f2027 0%, var(--bg) 70%);">
+  <div class="login-box">
+    <div class="login-logo">
+      <div class="icon">🔑</div>
+      <h1>Reset Password</h1>
+      <p>Admin only — enter your DOB to verify,<br>then set a new password.</p>
+    </div>
+    <div class="error-msg" id="forgotPassError"></div>
+    <div class="form-group">
+      <label>Username</label>
+      <input type="text" id="forgotUser" placeholder="Enter your name" />
+    </div>
+    <div class="form-group">
+      <label>Date of Birth (DDMM)</label>
+      <input type="password" id="forgotDOB" placeholder="DDMM" />
+    </div>
+    <button class="btn-primary" onclick="verifyForgotPassword()">Verify Identity 🔐</button>
+    <p style="text-align:center;margin-top:14px;">
+      <span onclick="showLoginScreen()" style="font-size:12px;color:var(--muted);cursor:pointer;">← Back to Login</span>
+    </p>
+  </div>
+</div>
+
+<!-- ── CHANGE PASSWORD ── -->
+<div id="changePassScreen" style="display:none;align-items:center;justify-content:center;min-height:100vh;padding:20px;background:radial-gradient(ellipse at 50% 0%, #0f2027 0%, var(--bg) 70%);">
+  <div class="login-box">
+    <div class="login-logo">
+      <div class="icon">🔐</div>
+      <h1>Set Your Password</h1>
+      <p id="changePassSub">You're logging in for the first time.<br>Please set a personal password.</p>
+    </div>
+    <div class="error-msg" id="changePassError"></div>
+    <div class="form-group">
+      <label>New Password</label>
+      <input type="password" id="newPass1" placeholder="Enter new password" />
+    </div>
+    <div class="form-group">
+      <label>Confirm Password</label>
+      <input type="password" id="newPass2" placeholder="Confirm new password" />
+    </div>
+    <button class="btn-primary" onclick="submitNewPassword()">Save Password & Enter 🔥</button>
+  </div>
+</div>
+
+<!-- ── APP ── -->
+<div id="app">
+  <div class="topbar">
+    <div class="topbar-brand">
+      <span class="icon">🏋️</span>
+      <span class="name">Bro's Tracker</span>
+    </div>
+    <div class="topbar-right">
+      <div class="user-chip">
+        <div class="avatar" id="topAvatar"></div>
+        <span id="topUsername"></span>
+      </div>
+      <button class="btn-logout" onclick="doLogout()">Logout</button>
+    </div>
+  </div>
+
+  <div class="nav-tabs">
+    <div class="nav-tab active" data-tab="dashboard" onclick="switchTab('dashboard')">🏆 Dashboard</div>
+    <div class="nav-tab" data-tab="log" onclick="switchTab('log')">📝 Log Day</div>
+    <div class="nav-tab" data-tab="history" onclick="switchTab('history')">📅 History</div>
+    <div class="nav-tab" data-tab="awards" onclick="switchTab('awards')">🏅 Awards</div>
+    <div class="nav-tab" data-tab="rules" onclick="switchTab('rules')">📋 Rules</div>
+  </div>
+
+  <div class="main">
+
+    <!-- ── DASHBOARD ── -->
+    <div class="section active" id="tab-dashboard">
+      <div class="trash-card" id="trashCard">
+        <div class="trash-label">🗣️ Trash Talk</div>
+        <div class="trash-text" id="trashText">Loading the banter...</div>
+      </div>
+
+      <div id="approvalsSection"></div>
+
+      <div class="card" style="padding:14px;">
+        <div class="card-title">🏆 Leaderboard</div>
+        <div id="leaderboardList"></div>
+      </div>
+
+      <div class="stats-grid" id="myStatsGrid"></div>
+
+      <div class="card" style="padding:16px;">
+        <div class="card-title">📈 Cumulative Points</div>
+        <div id="chartArea"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">📆 Yesterday's Log</div>
+        <div id="todayStatus"></div>
+      </div>
+    </div>
+
+    <!-- ── LOG DAY ── -->
+    <div class="section" id="tab-log">
+      <div style="text-align:center;font-size:13px;font-weight:700;color:var(--gold);background:rgba(227,179,65,0.08);border:1px solid rgba(227,179,65,0.25);border-radius:10px;padding:10px 16px;margin-bottom:12px;">
+        🤞 Mummy Kasam hai sabko ekdum sach sach bharna
+      </div>
+      <div class="card">
+        <div class="date-nav">
+          <button id="prevDayBtn" onclick="changeLogDate(-1)">&#8249;</button>
+          <span class="date-label" id="logDateLabel"></span>
+          <button id="nextDayBtn" onclick="changeLogDate(1)">&#8250;</button>
+        </div>
+
+        <div id="logFormArea"></div>
+      </div>
+    </div>
+
+    <!-- ── AWARDS ── -->
+    <div class="section" id="tab-awards">
+      <div class="card" style="padding:14px;">
+        <div class="card-title">🏆 All-Time Weekly Awards</div>
+        <div class="awards-tally" id="awardsTally"></div>
+      </div>
+      <div class="card" style="padding:14px;">
+        <div class="card-title">📅 Week-by-Week Results</div>
+        <div id="weeksList"></div>
+      </div>
+    </div>
+
+    <!-- ── HISTORY ── -->
+    <div class="section" id="tab-history">
+      <div class="card" style="padding:14px;">
+        <div class="card-title">📅 My Log History</div>
+        <div id="historyList"></div>
+      </div>
+    </div>
+
+    <!-- ── RULES ── -->
+    <div class="section" id="tab-rules">
+      <div class="card">
+        <div class="card-title">📋 Scoring Rules</div>
+        <div class="rules-item"><span class="ri-label">🏋️ Gym session</span><span class="ri-pts pos">+10 pts</span></div>
+        <div class="rules-item"><span class="ri-label">🏃 Activity (Run / Sports / Other*)</span><span class="ri-pts pos">+3 pts</span></div>
+        <div class="rules-item"><span class="ri-label">🥩 75 grams+ Protein</span><span class="ri-pts pos">+2 pts</span></div>
+        <div class="rules-item"><span class="ri-label">🚬 Smoke</span><span class="ri-pts neg">−20 pts</span></div>
+        <div class="rules-item"><span class="ri-label">🍺 Drink</span><span class="ri-pts neg">−30 pts</span></div>
+        <div class="rules-item"><span class="ri-label">🍔 Junk Food</span><span class="ri-pts neg">−10 pts</span></div>
+        <div class="rules-item"><span class="ri-label">⭐ Good Day (Gym + Activity + 75g Protein + No Bad Habits)</span><span class="ri-pts bonus">+4 bonus</span></div>
+        <div class="rules-item"><span class="ri-label">🔥 Gym Streak milestone (every 3rd day: +3, +6, +9…)</span><span class="ri-pts pos">+N pts</span></div>
+        <div class="rules-item"><span class="ri-label">⭐ Good Day Streak milestone (every 4th day: +4, +8, +12…)</span><span class="ri-pts pos">+N pts</span></div>
+        <div class="rules-item"><span class="ri-label" style="color:var(--muted);font-size:11px;">* Other activity requires approval from both bros</span><span></span></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">📅 Challenge Period</div>
+        <div class="rules-item"><span class="ri-label">Start Date</span><span style="font-weight:700;">June 1, 2026</span></div>
+        <div class="rules-item"><span class="ri-label">End Date</span><span style="font-weight:700;">Dec 31, 2026</span></div>
+        <div class="rules-item"><span class="ri-label">Total Days</span><span style="font-weight:700;">214 days</span></div>
+        <div class="rules-item"><span class="ri-label">Max Possible Score</span><span class="ri-pts pos">~17,458 pts</span></div>
+      </div>
+
+      <div class="card">
+        <div class="card-title">👥 Participants</div>
+        <div id="participantsList"></div>
+      </div>
+
+      <div id="adminPanel"></div>
+    </div>
+
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ── USERS ──
+const USERS = [
+  { username: 'Yugal',   password: '1111', color: '#00e5a0' },
+  { username: 'Vikas',   password: '2705', color: '#7c5cfc' },
+  { username: 'Dushyant',password: '1707', color: '#ff6b35' },
+];
+
+const START_DATE = '2026-06-01';
+const END_DATE   = '2026-12-31';
+
+// ── FIREBASE CONFIG ── (fill in your Firebase project details below)
+const FIREBASE_CONFIG = {
+  apiKey:            "AIzaSyDq7BqLm_rB_yxozAq67d0BlYIPTlBsKGo",
+  authDomain:        "bros-tacker.firebaseapp.com",
+  databaseURL:       "https://bros-tacker-default-rtdb.firebaseio.com",
+  projectId:         "bros-tacker",
+  storageBucket:     "bros-tacker.firebasestorage.app",
+  messagingSenderId: "76356612190",
+  appId:             "1:76356612190:web:907881ffe87fecac5b84cf"
+};
+
+const USE_FIREBASE = FIREBASE_CONFIG.apiKey !== "YOUR_API_KEY";
+let dbRef = null;
+
+if (USE_FIREBASE) {
+  firebase.initializeApp(FIREBASE_CONFIG);
+  dbRef = firebase.database().ref('brosTracker');
+}
+
+// ── STATE ──
+let currentUser = null;
+let pendingLoginUser = null;
+let logDate = todayStr();
+let appData = {};
+
+// ── PASSWORD MANAGEMENT ──
+function getPassStore() {
+  if (!appData._passwords) appData._passwords = {};
+  return appData._passwords;
+}
+
+function getUserPassword(username) {
+  const store = getPassStore();
+  return store[username] ? store[username].password : getDefaultPassword(username);
+}
+
+function isDefaultPassword(username) {
+  const store = getPassStore();
+  return !store[username] || store[username].isDefault === true;
+}
+
+function getDefaultPassword(username) {
+  const u = USERS.find(u => u.username === username);
+  return u ? u.password : '';
+}
+
+function setUserPassword(username, newPassword) {
+  getPassStore()[username] = { password: newPassword, isDefault: false };
+  saveData();
+}
+
+function resetUserPassword(username) {
+  const store = getPassStore();
+  delete store[username]; // removes custom → falls back to DOB default
+  saveData();
+}
+
+function todayStr() {
+  const d = new Date();
+  return localDateStr(d);
+}
+
+function localDateStr(d) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
+function formatDate(str) {
+  const d = new Date(str + 'T00:00:00');
+  return d.toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric' });
+}
+
+function loadData() {
+  try { return JSON.parse(localStorage.getItem('brosTracker') || '{}'); }
+  catch { return {}; }
+}
+
+function saveData() {
+  if (USE_FIREBASE) {
+    dbRef.set(appData);
+  } else {
+    localStorage.setItem('brosTracker', JSON.stringify(appData));
+  }
+}
+
+// ── APP INIT ──
+function initApp() {
+  if (USE_FIREBASE) {
+    // Real-time listener — syncs data across all devices instantly
+    dbRef.on('value', (snapshot) => {
+      const incoming = snapshot.val() || {};
+      appData = incoming;
+      // If someone is already logged in, re-render with latest data
+      if (currentUser) renderAll();
+    });
+    // Initial load — hide loading screen once we have data
+    dbRef.once('value').then(() => {
+      document.getElementById('loadingScreen').style.display = 'none';
+      document.getElementById('loginScreen').style.display = 'flex';
+    }).catch(() => {
+      // Firebase failed — fall back to localStorage
+      appData = loadData();
+      document.getElementById('loadingScreen').style.display = 'none';
+      document.getElementById('loginScreen').style.display = 'flex';
+    });
+  } else {
+    // No Firebase configured — use localStorage
+    appData = loadData();
+    document.getElementById('loadingScreen').style.display = 'none';
+    document.getElementById('loginScreen').style.display = 'flex';
+  }
+}
+
+function getUserLog(username) {
+  if (!appData[username]) appData[username] = {};
+  return appData[username];
+}
+
+// ── APPROVALS ──
+function getApprovals() {
+  if (!appData._approvals) appData._approvals = {};
+  return appData._approvals;
+}
+
+function approvalKey(username, date) { return `${username}__${date}`; }
+
+function getApprovalStatus(username, date) {
+  const key = approvalKey(username, date);
+  const ap = getApprovals()[key];
+  if (!ap) return null;
+  const votes = Object.values(ap.votes);
+  if (votes.some(v => v === false)) return 'rejected';
+  if (votes.every(v => v === true)) return 'approved';
+  return 'pending';
+}
+
+function createApprovalRequest(username, date, activityOther) {
+  const others = USERS.filter(u => u.username !== username).map(u => u.username);
+  const votes = {};
+  others.forEach(u => { votes[u] = null; });
+  getApprovals()[approvalKey(username, date)] = { requester: username, date, activityOther, votes };
+  saveData();
+}
+
+function castVote(username, date, voter, approve) {
+  const ap = getApprovals()[approvalKey(username, date)];
+  if (!ap) return;
+  ap.votes[voter] = approve;
+  saveData();
+  renderAll();
+}
+
+function getPendingApprovalsFor(voter) {
+  return Object.values(getApprovals()).filter(ap =>
+    ap.votes[voter] === null && ap.requester !== voter
+  );
+}
+
+// ── SCORING ──
+const BAD_PTS = { Smoke: -20, Drink: -30, 'Junk Diet': -10 };
+
+// Count gym streak ON a specific day (including that day)
+function gymStreakOnDay(username, dateStr) {
+  const log = getUserLog(username);
+  const dates = getDateRange(START_DATE, dateStr);
+  let streak = 0;
+  for (let i = dates.length - 1; i >= 0; i--) {
+    if (log[dates[i]] && log[dates[i]].gym) streak++;
+    else break;
+  }
+  return streak;
+}
+
+// Count good day streak ON a specific day (including that day)
+function goodDayStreakOnDay(username, dateStr) {
+  const log = getUserLog(username);
+  const dates = getDateRange(START_DATE, dateStr);
+  let streak = 0;
+  for (let i = dates.length - 1; i >= 0; i--) {
+    const d = dates[i];
+    const e = log[d];
+    const isGood = e && e.gym && e.activity &&
+      (e.activity !== 'Other' || getApprovalStatus(username, d) === 'approved') &&
+      e.protein === true && (e.badHabits || []).length === 0;
+    if (isGood) streak++;
+    else break;
+  }
+  return streak;
+}
+
+function calcDayScore(entry, username, dateStr) {
+  if (!entry) return null;
+  let pos = 0, neg = 0, notes = [];
+
+  if (entry.gym) { pos += 10; notes.push({ label: 'Gym', pts: 10 }); }
+
+  if (entry.activity) {
+    if (entry.activity === 'Other') {
+      const status = getApprovalStatus(username, dateStr);
+      if (status === 'approved') { pos += 3; notes.push({ label: entry.activityOther || 'Other', pts: 3 }); }
+    } else {
+      pos += 3; notes.push({ label: entry.activity, pts: 3 });
+    }
+  }
+
+  if (entry.protein === true) { pos += 2; notes.push({ label: '75g+ Protein', pts: 2 }); }
+
+  (entry.badHabits || []).forEach(b => {
+    const pts = BAD_PTS[b] || -10;
+    neg += Math.abs(pts);
+    notes.push({ label: b, pts });
+  });
+
+  // Good Day bonus: Gym + Activity (approved if Other) + 75g protein + no bad habits
+  const activityCounts = entry.activity && (entry.activity !== 'Other' || getApprovalStatus(username, dateStr) === 'approved');
+  let cleanSheet = entry.gym && activityCounts && entry.protein === true && (entry.badHabits || []).length === 0;
+  if (cleanSheet) { pos += 4; notes.push({ label: 'Good Day ⭐', pts: 4, bonus: true }); }
+
+  // Gym streak milestone bonus — every multiple of 3
+  if (entry.gym) {
+    const gs = gymStreakOnDay(username, dateStr);
+    if (gs > 0 && gs % 3 === 0) {
+      pos += gs;
+      notes.push({ label: `🔥 Gym Streak ${gs} days`, pts: gs, bonus: true });
+    }
+  }
+
+  // Good Day streak milestone bonus — every multiple of 4
+  if (cleanSheet) {
+    const gds = goodDayStreakOnDay(username, dateStr);
+    if (gds > 0 && gds % 4 === 0) {
+      pos += gds;
+      notes.push({ label: `⭐ Good Day Streak ${gds} days`, pts: gds, bonus: true });
+    }
+  }
+
+  const score = pos - neg;
+  return { score, notes, cleanSheet, streakActive: false };
+}
+
+function getTotalScore(username) {
+  const log = getUserLog(username);
+  let total = 0;
+  Object.keys(log).forEach(d => {
+    const r = calcDayScore(log[d], username, d);
+    if (r) total += r.score;
+  });
+  return total;
+}
+
+function getCurrentStreak(username) {
+  const log = getUserLog(username);
+  const yesterday = yesterdayStr();
+  const dates = getDateRange(START_DATE, yesterday);
+  let streak = 0;
+  for (let i = dates.length - 1; i >= 0; i--) {
+    const d = dates[i];
+    if (log[d] && log[d].gym) streak++;
+    else break;
+  }
+  return streak;
+}
+
+function getGoodDayStreak(username) {
+  const log = getUserLog(username);
+  const yesterday = yesterdayStr();
+  const dates = getDateRange(START_DATE, yesterday);
+  let streak = 0;
+  for (let i = dates.length - 1; i >= 0; i--) {
+    const d = dates[i];
+    const e = log[d];
+    const isGoodDay = e && e.gym && e.activity &&
+      (e.activity !== 'Other' || getApprovalStatus(username, d) === 'approved') &&
+      e.protein === true && (e.badHabits || []).length === 0;
+    if (isGoodDay) streak++;
+    else break;
+  }
+  return streak;
+}
+
+function getLoggedDays(username) {
+  return Object.keys(getUserLog(username)).length;
+}
+
+function getDateRange(start, end) {
+  const dates = [];
+  let cur = new Date(start + 'T00:00:00');
+  const endD = new Date(end + 'T00:00:00');
+  while (cur <= endD) {
+    dates.push(localDateStr(cur));
+    cur.setDate(cur.getDate() + 1);
+  }
+  return dates;
+}
+
+// ── TRASH TALK ──
+function generateTrashTalk() {
+  // Seed by today's date so it's stable all day but changes daily
+  const today = todayStr();
+  const seed = today.split('-').reduce((a, b) => a * 31 + parseInt(b), 0);
+  const pick = (arr) => arr[Math.abs(seed + arr.length * 17) % arr.length];
+
+  const yesterday = yesterdayStr();
+  const sorted = USERS.map(u => {
+    const log = getUserLog(u.username);
+    const yLog = log[yesterday];
+    // last 7 days
+    const last7 = getDateRange(START_DATE, yesterday).slice(-7).map(d => log[d]).filter(Boolean);
+    const gymDays7 = last7.filter(e => e.gym).length;
+    const badDays7 = last7.filter(e => (e.badHabits||[]).length > 0).length;
+    const drinkDays7 = last7.filter(e => (e.badHabits||[]).includes('Drink')).length;
+    const smokeDays7 = last7.filter(e => (e.badHabits||[]).includes('Smoke')).length;
+    const junkDays7  = last7.filter(e => (e.badHabits||[]).includes('Junk Diet')).length;
+    const proteinDays7 = last7.filter(e => e.protein).length;
+    const goodDays7 = last7.filter(e => {
+      const r = calcDayScore(e, u.username, yesterday);
+      return r && r.cleanSheet;
+    }).length;
+    return {
+      ...u,
+      total: getTotalScore(u.username),
+      streak: getCurrentStreak(u.username),
+      yLog, gymDays7, badDays7, drinkDays7, smokeDays7, junkDays7, proteinDays7, goodDays7,
+    };
+  }).sort((a, b) => b.total - a.total);
+
+  const [first, second, third] = sorted;
+  const loser = sorted[sorted.length - 1];
+  const leader = sorted[0];
+
+  // Build context-aware pool
+  const lines = [];
+
+  // Drink shaming
+  if (loser.drinkDays7 >= 3) lines.push(`${loser.username} drank ${loser.drinkDays7} times this week. Bro, this is a FITNESS tracker, not a bar tab. 🍺`);
+  if (loser.drinkDays7 >= 2) lines.push(`${loser.username}'s weekly report: ${loser.drinkDays7} drinks, ${loser.gymDays7} gym days. One of these needs to go up. 🤦`);
+  USERS.forEach(u => {
+    const l = getUserLog(u.username);
+    const last7 = getDateRange(START_DATE, yesterday).slice(-7).map(d => l[d]).filter(Boolean);
+    const drinkDays = last7.filter(e => (e.badHabits||[]).includes('Drink')).length;
+    if (drinkDays >= 4) lines.push(`${u.username} is basically sponsored by alcohol at this point. ${drinkDays} drinks in 7 days. 🥴`);
+  });
+
+  // Gym praise/shame
+  if (leader.streak >= 7) lines.push(`${leader.username} hasn't missed a gym day in ${leader.streak} days. At this point just move into the gym bro. 🏠🏋️`);
+  if (leader.streak >= 5) lines.push(`${leader.streak}-day streak for ${leader.username}? Someone check if he's human or just a protein shake with legs. 🦾`);
+  if (loser.gymDays7 === 0) lines.push(`${loser.username} has a gym membership and zero gym days this week. Peak investment strategy. 💸`);
+  if (loser.gymDays7 <= 1) lines.push(`${loser.username} went to the gym ${loser.gymDays7} time(s) this week. The gym filed a missing person report. 🚨`);
+
+  // Protein
+  if (loser.proteinDays7 <= 2) lines.push(`${loser.username} hit protein goals ${loser.proteinDays7} days out of 7. The gains fairy has officially given up on him. 🧚`);
+  USERS.forEach(u => {
+    const l7 = getDateRange(START_DATE, yesterday).slice(-7).map(d => getUserLog(u.username)[d]).filter(Boolean);
+    if (l7.filter(e => e.protein).length === 7) lines.push(`${u.username} hit 75g protein 7 days straight. Someone's been having relationship problems with a chicken breast. 🍗`);
+  });
+
+  // Smoke
+  if (loser.smokeDays7 >= 2) lines.push(`${loser.username} logged smoking ${loser.smokeDays7} times this week. Bro the gym air compressor works better than your lungs rn. 🫁`);
+
+  // Junk food
+  if (loser.junkDays7 >= 3) lines.push(`${loser.username}: ${loser.junkDays7} junk food days this week. Even McDonald's is concerned. 🍔`);
+
+  // Good day streaks
+  if (leader.goodDays7 >= 5) lines.push(`${leader.goodDays7} Good Days in a week for ${leader.username}?! The man is basically a walking supplement ad. 💊`);
+
+  // Score gap
+  const gap = first.total - loser.total;
+  if (gap > 100) lines.push(`The gap between ${first.username} and ${loser.username} is ${gap} pts. That's not a competition, that's a documentary. 🎬`);
+  if (gap > 50)  lines.push(`${first.username} vs ${loser.username}: ${first.total} pts vs ${loser.total} pts. One of you is grinding, the other is just… existing. 🌿`);
+
+  // Generic bangers
+  lines.push(`${second.username} is comfortably in second place. The most dangerous position — too comfortable to grind, too close to quit. ⚠️`);
+  lines.push(`${loser.username} said "new year new me" and meant "new year, same gym avoidance." 🎉`);
+  lines.push(`If ${leader.username} was a stock, you'd buy it. If ${loser.username} was a stock, you'd short it. 📉`);
+  lines.push(`${loser.username}'s fitness journey: still in chapter 1. ${leader.username} is already writing the sequel. 📖`);
+  lines.push(`Somewhere ${loser.username}'s gym shoes are gathering dust and wondering what they did wrong. 👟`);
+  lines.push(`${first.username} at the top, ${second.username} surviving, ${loser.username} being ${loser.username}. This is fine. 🔥🔥🔥`);
+  lines.push(`Fun fact: ${loser.username}'s couch knows his body shape better than any gym machine. 🛋️`);
+  lines.push(`${leader.username} is built different. Or just shows up different. Which for the rest of you means the same thing. 🏆`);
+
+  return pick(lines.filter(Boolean));
+}
+
+// ── LINE CHART ──
+function renderChart() {
+  const el = document.getElementById('chartArea');
+  const yesterday = yesterdayStr();
+  const dates = getDateRange(START_DATE, yesterday);
+
+  if (!dates.length) {
+    el.innerHTML = `<p style="color:var(--muted);font-size:13px;text-align:center;padding:20px 0">No data yet — chart will appear once logging starts.</p>`;
+    return;
+  }
+
+  // Build cumulative scores per user
+  const series = USERS.map(u => {
+    let cum = 0;
+    return {
+      ...u,
+      points: dates.map(d => {
+        const log = getUserLog(u.username);
+        const r = log[d] ? calcDayScore(log[d], u.username, d) : null;
+        cum += r ? r.score : 0;
+        return cum;
+      }),
+    };
+  });
+
+  const W = 560, H = 220;
+  const padL = 46, padR = 12, padT = 12, padB = 30;
+  const innerW = W - padL - padR;
+  const innerH = H - padT - padB;
+
+  const allVals = series.flatMap(s => s.points);
+  const minV = Math.min(0, ...allVals);
+  const maxV = Math.max(1, ...allVals);
+  const range = maxV - minV || 1;
+
+  const xScale = (i) => padL + (i / Math.max(dates.length - 1, 1)) * innerW;
+  const yScale = (v) => padT + innerH - ((v - minV) / range) * innerH;
+
+  // Grid lines & y labels
+  const yTicks = 5;
+  let gridLines = '';
+  let yLabels = '';
+  for (let i = 0; i <= yTicks; i++) {
+    const v = minV + (range / yTicks) * i;
+    const y = yScale(v);
+    gridLines += `<line x1="${padL}" y1="${y.toFixed(1)}" x2="${W - padR}" y2="${y.toFixed(1)}" stroke="#2a3140" stroke-width="1"/>`;
+    yLabels += `<text x="${padL - 6}" y="${(y + 4).toFixed(1)}" text-anchor="end" fill="#7d8590" font-size="10">${Math.round(v)}</text>`;
+  }
+
+  // X axis labels (every ~7 days)
+  let xLabels = '';
+  const step = Math.max(1, Math.floor(dates.length / 6));
+  for (let i = 0; i < dates.length; i += step) {
+    const x = xScale(i);
+    const d = new Date(dates[i] + 'T00:00:00');
+    const label = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+    xLabels += `<text x="${x.toFixed(1)}" y="${H - 6}" text-anchor="middle" fill="#7d8590" font-size="10">${label}</text>`;
+  }
+
+  // Zero line
+  const zeroY = yScale(0);
+  const zeroLine = `<line x1="${padL}" y1="${zeroY.toFixed(1)}" x2="${W - padR}" y2="${zeroY.toFixed(1)}" stroke="#3a4150" stroke-width="1.5" stroke-dasharray="4,3"/>`;
+
+  // Lines & dots per user
+  let paths = '';
+  let dots = '';
+  series.forEach(s => {
+    if (!s.points.length) return;
+    const pts = s.points.map((v, i) => `${xScale(i).toFixed(1)},${yScale(v).toFixed(1)}`).join(' ');
+    paths += `<polyline points="${pts}" fill="none" stroke="${s.color}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" opacity="0.9"/>`;
+    // Only show dot at last point
+    const lastX = xScale(s.points.length - 1);
+    const lastY = yScale(s.points[s.points.length - 1]);
+    dots += `<circle cx="${lastX.toFixed(1)}" cy="${lastY.toFixed(1)}" r="4" fill="${s.color}" stroke="var(--bg)" stroke-width="2"/>`;
+  });
+
+  el.innerHTML = `
+    <div class="chart-wrap">
+      <svg viewBox="0 0 ${W} ${H}" width="100%" style="max-height:220px;">
+        ${gridLines}${zeroLine}${yLabels}${xLabels}${paths}${dots}
+      </svg>
+    </div>
+    <div class="chart-legend">
+      ${series.map(s => `
+        <div class="chart-legend-item">
+          <div class="chart-legend-dot" style="background:${s.color}"></div>
+          <span style="color:${s.color}">${s.username}</span>
+          <span style="color:var(--muted)">${s.points[s.points.length-1] > 0 ? '+' : ''}${s.points[s.points.length-1] || 0} pts</span>
+        </div>`).join('')}
+    </div>`;
+}
+
+// ── AVATAR COLOR ──
+function getColor(username) {
+  const u = USERS.find(u => u.username === username);
+  return u ? u.color : '#7c5cfc';
+}
+
+function getInitial(username) { return username[0].toUpperCase(); }
+
+// ── LOGIN / LOGOUT ──
+function doLogin() {
+  const usernameRaw = document.getElementById('loginUser').value.trim();
+  const password    = document.getElementById('loginPass').value.trim();
+  const user = USERS.find(u => u.username.toLowerCase() === usernameRaw.toLowerCase());
+  if (!user || getUserPassword(user.username) !== password) {
+    document.getElementById('loginError').style.display = 'block';
+    return;
+  }
+  document.getElementById('loginError').style.display = 'none';
+  document.getElementById('loginScreen').style.display = 'none';
+
+  // First-time login (still on default password) → force password change
+  if (isDefaultPassword(user.username)) {
+    pendingLoginUser = user.username;
+    document.getElementById('changePassSub').innerHTML =
+      `Hey <b>${user.username}</b>! First login detected.<br>Please set your personal password.`;
+    document.getElementById('changePassError').style.display = 'none';
+    document.getElementById('newPass1').value = '';
+    document.getElementById('newPass2').value = '';
+    document.getElementById('changePassScreen').style.display = 'flex';
+    return;
+  }
+
+  enterApp(user.username);
+}
+
+function submitNewPassword() {
+  const p1 = document.getElementById('newPass1').value.trim();
+  const p2 = document.getElementById('newPass2').value.trim();
+  const errEl = document.getElementById('changePassError');
+
+  if (p1.length < 4) {
+    errEl.textContent = 'Password must be at least 4 characters.';
+    errEl.style.display = 'block'; return;
+  }
+  if (p1 !== p2) {
+    errEl.textContent = 'Passwords do not match. Try again.';
+    errEl.style.display = 'block'; return;
+  }
+
+  setUserPassword(pendingLoginUser, p1);
+  document.getElementById('changePassScreen').style.display = 'none';
+  enterApp(pendingLoginUser);
+  pendingLoginUser = null;
+}
+
+function enterApp(username) {
+  currentUser = username;
+  document.getElementById('app').style.display = 'block';
+  const av = document.getElementById('topAvatar');
+  av.style.background = getColor(currentUser);
+  av.textContent = getInitial(currentUser);
+  document.getElementById('topUsername').textContent = currentUser;
+  logDate = yesterdayStr();
+  renderAll();
+}
+
+document.getElementById('loginPass').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+document.getElementById('loginUser').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+document.getElementById('newPass2').addEventListener('keydown', e => { if (e.key === 'Enter') submitNewPassword(); });
+document.getElementById('forgotDOB').addEventListener('keydown', e => { if (e.key === 'Enter') verifyForgotPassword(); });
+
+// Service Worker (PWA offline support)
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch(() => {});
+  });
+}
+
+// Boot
+initApp();
+
+function doLogout() {
+  currentUser = null;
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('changePassScreen').style.display = 'none';
+  document.getElementById('forgotPassScreen').style.display = 'none';
+  document.getElementById('loginScreen').style.display = 'flex';
+  document.getElementById('loginUser').value = '';
+  document.getElementById('loginPass').value = '';
+}
+
+function showForgotPassword() {
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('forgotPassError').style.display = 'none';
+  document.getElementById('forgotUser').value = '';
+  document.getElementById('forgotDOB').value = '';
+  document.getElementById('forgotPassScreen').style.display = 'flex';
+}
+
+function showLoginScreen() {
+  document.getElementById('forgotPassScreen').style.display = 'none';
+  document.getElementById('loginScreen').style.display = 'flex';
+}
+
+function verifyForgotPassword() {
+  const usernameRaw = document.getElementById('forgotUser').value.trim();
+  const dob = document.getElementById('forgotDOB').value.trim();
+  const errEl = document.getElementById('forgotPassError');
+  const user = USERS.find(u => u.username.toLowerCase() === usernameRaw.toLowerCase());
+
+  // Only Yugal (admin) can self-reset via DOB
+  if (user && user.username !== 'Yugal') {
+    errEl.textContent = 'Self-reset via DOB is only available to the Admin (Yugal). Ask Yugal to reset your password from the Admin panel.';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  if (!user || getDefaultPassword(user.username) !== dob) {
+    errEl.textContent = 'Username or DOB is incorrect. Try again.';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  // DOB verified — force password reset
+  errEl.style.display = 'none';
+  document.getElementById('forgotPassScreen').style.display = 'none';
+  pendingLoginUser = user.username;
+  document.getElementById('changePassSub').innerHTML =
+    `Identity verified, <b>${user.username}</b>!<br>Please set your new password.`;
+  document.getElementById('changePassError').style.display = 'none';
+  document.getElementById('newPass1').value = '';
+  document.getElementById('newPass2').value = '';
+  document.getElementById('changePassScreen').style.display = 'flex';
+}
+
+// ── TABS ──
+function switchTab(tab) {
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
+  document.querySelectorAll('.section').forEach(s => s.classList.toggle('active', s.id === 'tab-' + tab));
+  if (tab === 'log') renderLogForm();
+  if (tab === 'history') renderHistory();
+  if (tab === 'dashboard') renderDashboard();
+  if (tab === 'awards') renderAwards();
+  if (tab === 'rules') renderAdminPanel();
+}
+
+// ── RENDER ALL ──
+function renderAll() {
+  renderDashboard();
+  renderLogForm();
+  renderHistory();
+  renderParticipants();
+}
+
+// ── DASHBOARD ──
+function renderDashboard() {
+  renderApprovals();
+  renderLeaderboard();
+  renderTrashTalk();
+  renderMyStats();
+  renderChart();
+  renderTodayStatus();
+}
+
+function renderApprovals() {
+  const pending = getPendingApprovalsFor(currentUser);
+  const el = document.getElementById('approvalsSection');
+
+  if (!pending.length) { el.innerHTML = ''; return; }
+
+  el.innerHTML = `
+    <div class="card" style="padding:14px;border-color:rgba(227,179,65,0.35);">
+      <div class="card-title" style="color:var(--gold);">⏳ Pending Approvals (${pending.length})</div>
+      ${pending.map(ap => {
+        const requesterColor = getColor(ap.requester);
+        return `
+          <div class="approval-card">
+            <div class="ap-top">
+              <div class="lb-avatar" style="background:${requesterColor};width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#0d1117;flex-shrink:0">${getInitial(ap.requester)}</div>
+              <div class="ap-info">
+                <div class="ap-name">${ap.requester}</div>
+                <div class="ap-activity">🎯 "${ap.activityOther}"</div>
+                <div class="ap-date">${formatDate(ap.date)}</div>
+              </div>
+            </div>
+            <div class="ap-actions">
+              <button class="btn-approve" onclick="castVote('${ap.requester}','${ap.date}','${currentUser}',true)">✅ Approve +5pts</button>
+              <button class="btn-reject"  onclick="castVote('${ap.requester}','${ap.date}','${currentUser}',false)">❌ Reject</button>
+            </div>
+          </div>`;
+      }).join('')}
+    </div>`;
+}
+
+function renderLeaderboard() {
+  const scores = USERS.map(u => ({
+    ...u,
+    total: getTotalScore(u.username),
+    streak: getCurrentStreak(u.username),
+    logged: getLoggedDays(u.username),
+  })).sort((a, b) => b.total - a.total);
+
+  // Dense ranking: same score = same medal, next unique score = next medal
+  const medalMap = ['🥇', '🥈', '🥉'];
+  let denseRank = 0;
+  let prevScore = null;
+  const ranked = scores.map(u => {
+    if (u.total !== prevScore) { denseRank++; prevScore = u.total; }
+    return { ...u, denseRank };
+  });
+
+  const list = document.getElementById('leaderboardList');
+  list.innerHTML = ranked.map(u => `
+    <div class="leaderboard-item">
+      <div class="rank-badge">${medalMap[u.denseRank - 1] || u.denseRank + '.'}</div>
+      <div class="lb-avatar" style="background:${u.color}">${getInitial(u.username)}</div>
+      <div class="lb-info">
+        <div class="lb-name">${u.username} ${u.username === currentUser ? '<span style="font-size:10px;color:var(--muted)">(you)</span>' : ''}</div>
+        <div class="lb-sub">
+          ${u.logged} days logged
+          ${u.streak >= 3 ? `&nbsp;<span class="streak-badge">🔥 ${u.streak}-day streak</span>` : u.streak > 0 ? `&nbsp;<span style="font-size:11px;color:var(--muted)">🔥 ${u.streak} days</span>` : ''}
+        </div>
+      </div>
+      <div class="lb-score">${u.total}<br><span class="pts">pts</span></div>
+    </div>
+  `).join('');
+}
+
+function renderTrashTalk() {
+  document.getElementById('trashText').textContent = generateTrashTalk();
+}
+
+function renderMyStats() {
+  const log = getUserLog(currentUser);
+  const allDates = getDateRange(START_DATE, todayStr());
+  const loggedDates = allDates.filter(d => log[d]);
+  const gymDays = loggedDates.filter(d => log[d].gym).length;
+  const cleanDays = loggedDates.filter(d => {
+    const e = log[d];
+    return e.gym && e.activity && (e.badHabits || []).length === 0;
+  }).length;
+  const totalDays = allDates.length;
+  const gymStreak     = getCurrentStreak(currentUser);
+  const goodDayStreak = getGoodDayStreak(currentUser);
+  const total         = getTotalScore(currentUser);
+
+  document.getElementById('myStatsGrid').innerHTML = `
+    <div class="stat-tile">
+      <div class="st-val" style="color:var(--accent)">${total}</div>
+      <div class="st-label">Total Points</div>
+    </div>
+    <div class="stat-tile">
+      <div class="st-val" style="color:var(--accent3)">${gymDays}</div>
+      <div class="st-label">Total Gym Days</div>
+    </div>
+    <div class="stat-tile">
+      <div class="st-val" style="color:var(--accent2)">${gymStreak}</div>
+      <div class="st-label">🏋️ Gym Streak</div>
+    </div>
+    <div class="stat-tile">
+      <div class="st-val" style="color:var(--gold)">${goodDayStreak}</div>
+      <div class="st-label">⭐ Good Day Streak</div>
+    </div>
+  `;
+}
+
+function renderTodayStatus() {
+  const yesterday = yesterdayStr();
+  const log = getUserLog(currentUser);
+  const el = document.getElementById('todayStatus');
+
+  if (!log[yesterday]) {
+    el.innerHTML = `
+      <div style="text-align:center;padding:10px 0;">
+        <div style="color:var(--danger);font-size:14px;font-weight:600;margin-bottom:12px;">⚠️ Yesterday not logged yet!</div>
+        <div style="color:var(--muted);font-size:12px;margin-bottom:16px;">${formatDate(yesterday)}</div>
+        <button onclick="switchTab('log')" style="background:var(--accent);border:none;border-radius:8px;padding:10px 20px;font-weight:700;color:#0d1117;cursor:pointer;font-size:14px;">Log Yesterday →</button>
+      </div>
+      <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border);text-align:center;font-size:12px;color:var(--muted);">
+        📅 Today's activities can be logged tomorrow
+      </div>`;
+    return;
+  }
+
+  const entry = log[yesterday];
+  const result = calcDayScore(entry, currentUser, yesterday);
+  el.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+      <span style="font-size:13px;color:var(--muted)">${formatDate(yesterday)}</span>
+      <span style="font-size:22px;font-weight:800;color:${result.score >= 0 ? 'var(--accent)' : 'var(--danger)'}">${result.score > 0 ? '+' : ''}${result.score} pts</span>
+    </div>
+    <div class="he-tags">
+      ${entry.gym ? '<span class="tag tag-gym">🏋️ Gym</span>' : '<span class="tag tag-bad">❌ No Gym</span>'}
+      ${entry.activity ? `<span class="tag tag-activity">${activityIcon(entry.activity, entry)} ${activityLabel(entry)}</span>` : ''}
+      ${(entry.badHabits || []).map(b => `<span class="tag tag-bad">${badIcon(b)} ${b}</span>`).join('')}
+      ${result.cleanSheet ? '<span class="tag tag-clean">⭐ Good Day</span>' : ''}
+      ${entry.protein === true ? '<span class="tag" style="background:rgba(0,229,160,0.08);color:#7ee8c8;border:1px solid rgba(0,229,160,0.2);">🥩 Protein ✓</span>' : entry.protein === false ? '<span class="tag" style="background:rgba(248,81,73,0.08);color:var(--danger);border:1px solid rgba(248,81,73,0.2);">🥩 Low Protein</span>' : ''}
+    </div>
+    <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);text-align:center;font-size:12px;color:var(--muted);">
+      📅 Today's activities can be logged tomorrow
+    </div>`;
+}
+
+function activityIcon(a, entry) {
+  if (a === 'Sports' && entry && entry.sportsType) return sportsIcon(entry.sportsType);
+  const m = { Running: '🚶', Sports: '⚽', Other: '🎯' };
+  return m[a] || '🚶';
+}
+
+function activityLabel(entry) {
+  if (!entry.activity) return '';
+  if (entry.activity === 'Other' && entry.activityOther) return entry.activityOther;
+  if (entry.activity === 'Sports' && entry.sportsType) return entry.sportsType;
+  if (entry.activity === 'Running') return 'Walk/Run';
+  return entry.activity;
+}
+
+function sportsIcon(s) {
+  const m = { Badminton: '🏸', 'Table Tennis': '🏓', Swimming: '🏊', Cricket: '🏏', Football: '⚽' };
+  return m[s] || '⚽';
+}
+
+function activityDisplayLabel(a) {
+  if (a === 'Running') return 'Walk/Run';
+  return a;
+}
+
+
+
+function badIcon(b) {
+  const m = { Smoke: '🚬', Drink: '🍺', 'Junk Diet': '🍔' };
+  return m[b] || '⚠️';
+}
+
+// ── LOG FORM ──
+let logState = { gym: null, activity: null, activityOther: '', sportsType: '', badHabits: [], protein: null };
+
+function yesterdayStr() {
+  const d = new Date();
+  d.setDate(d.getDate() - 1);
+  return localDateStr(d);
+}
+
+function changeLogDate(dir) {
+  // Navigation locked — only yesterday is loggable
+}
+
+function renderLogForm() {
+  const yesterday = yesterdayStr();
+  logDate = yesterday; // always lock to yesterday
+
+  document.getElementById('logDateLabel').textContent = formatDate(yesterday);
+  document.getElementById('prevDayBtn').disabled = true;
+  document.getElementById('nextDayBtn').disabled = true;
+
+  const log = getUserLog(currentUser);
+  const existing = log[logDate];
+  const area = document.getElementById('logFormArea');
+
+  if (existing) {
+    const result = calcDayScore(existing, currentUser, logDate);
+    area.innerHTML = `
+      <div class="already-logged">
+        ✅ Already logged for this day!<br>
+        <span style="font-size:22px;font-weight:800;color:${result.score >= 0 ? 'var(--accent)' : 'var(--danger)'};display:block;margin-top:8px;">${result.score > 0 ? '+' : ''}${result.score} pts</span>
+        <div class="he-tags" style="justify-content:center;margin-top:10px;">
+          ${existing.gym ? '<span class="tag tag-gym">🏋️ Gym</span>' : '<span class="tag tag-bad">❌ No Gym</span>'}
+          ${existing.activity ? `<span class="tag tag-activity">${activityIcon(existing.activity, existing)} ${activityLabel(existing)}</span>` : ''}
+          ${(existing.badHabits || []).map(b => `<span class="tag tag-bad">${badIcon(b)} ${b}</span>`).join('')}
+          ${result.cleanSheet ? '<span class="tag tag-clean">⭐ Good Day</span>' : ''}
+          ${existing.protein === true ? '<span class="tag" style="background:rgba(0,229,160,0.08);color:#7ee8c8;border:1px solid rgba(0,229,160,0.2);">🥩 Protein ✓</span>' : existing.protein === false ? '<span class="tag" style="background:rgba(248,81,73,0.08);color:var(--danger);border:1px solid rgba(248,81,73,0.2);">🥩 Low Protein</span>' : ''}
+        </div>
+        ${existing.activity === 'Other' ? (() => {
+          const st = getApprovalStatus(currentUser, logDate);
+          const ap = getApprovals()[approvalKey(currentUser, logDate)];
+          const voterSummary = ap ? Object.entries(ap.votes).map(([u,v]) =>
+            `<span style="font-size:11px;font-weight:600;color:${v===true?'var(--accent)':v===false?'var(--danger)':'var(--gold)'}">${u}: ${v===true?'✅':v===false?'❌':'⏳'}</span>`
+          ).join('&nbsp;&nbsp;') : '';
+          return `<div class="ap-voted ${st||'pending'}" style="margin-top:10px;">
+            ${st==='approved'?'✅ Approved — +5 pts counted!':st==='rejected'?'❌ Rejected — activity points not counted':'⏳ Waiting for approval'}
+            ${voterSummary ? `<div style="margin-top:4px;">${voterSummary}</div>` : ''}
+          </div>`;
+        })() : ''}
+        <br>
+        <button onclick="editLog()" style="background:var(--card);border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:8px 16px;font-size:12px;cursor:pointer;margin-top:4px;">✏️ Edit Log</button>
+      </div>
+    `;
+    return;
+  }
+
+  // initialize logState from nothing
+  logState = { gym: null, activity: null, activityOther: '', sportsType: '', protein: null, badHabits: [] };
+  area.innerHTML = buildLogFormHTML();
+}
+
+function isFormValid() {
+  if (logState.gym === null) return false;
+  if (logState.activity === 'Other' && !logState.activityOther.trim()) return false;
+  if (logState.activity === 'Sports' && !logState.sportsType) return false;
+  return true;
+}
+
+function buildLogFormHTML() {
+  const otherInvalid = logState.activity === 'Other' && !logState.activityOther.trim();
+  return `
+    <div class="form-group">
+      <label>🏋️ Did you hit the gym?</label>
+      <div class="toggle-group">
+        <button class="toggle-btn ${logState.gym === true ? 'selected-yes' : ''}" onclick="setGym(true)">💪 Yes</button>
+        <button class="toggle-btn ${logState.gym === false ? 'selected-no' : ''}" onclick="setGym(false)">❌ No</button>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>🏃 Activity today?</label>
+      <div class="toggle-group">
+        <button class="toggle-btn ${logState.activity === 'Running' ? 'selected-activity' : ''}" onclick="setActivity('Running')">🚶 Walk/Run*</button>
+        <button class="toggle-btn ${logState.activity === 'Sports' ? 'selected-activity' : ''}" onclick="setActivity('Sports')">⚽ Sports</button>
+        <button class="toggle-btn ${logState.activity === 'Other' ? 'selected-activity' : ''}" onclick="setActivity('Other')">🎯 Other</button>
+        <button class="toggle-btn ${logState.activity === null ? 'selected-no' : ''}" onclick="setActivity(null)" style="font-size:12px;">🚫 None</button>
+      </div>
+      <p style="font-size:11px;color:var(--danger);margin-top:6px;">* Don't select Walk/Run if distance was less than 3km — select NONE instead.</p>
+      ${logState.activity === 'Sports' ? `
+        <div style="margin-top:10px;">
+          <select id="sportsTypeSelect" onchange="setSportsType(this.value)"
+            style="width:100%;background:var(--surface);border:1.5px solid ${!logState.sportsType ? 'var(--danger)' : 'var(--accent3)'};border-radius:8px;padding:10px 14px;color:${logState.sportsType ? 'var(--text)' : 'var(--muted)'};font-size:14px;outline:none;">
+            <option value="" disabled ${!logState.sportsType ? 'selected' : ''}>Select sport…</option>
+            <option value="Badminton"    ${logState.sportsType==='Badminton'    ? 'selected':''}>🏸 Badminton</option>
+            <option value="Table Tennis" ${logState.sportsType==='Table Tennis' ? 'selected':''}>🏓 Table Tennis</option>
+            <option value="Swimming"     ${logState.sportsType==='Swimming'     ? 'selected':''}>🏊 Swimming</option>
+            <option value="Cricket"      ${logState.sportsType==='Cricket'      ? 'selected':''}>🏏 Cricket</option>
+            <option value="Football"     ${logState.sportsType==='Football'     ? 'selected':''}>⚽ Football</option>
+          </select>
+          ${!logState.sportsType ? '<p style="font-size:11px;color:var(--danger);margin-top:5px;">⚠️ Please select a sport to continue.</p>' : ''}
+        </div>
+      ` : ''}
+      ${logState.activity === 'Other' ? `
+        <div style="margin-top:10px;">
+          <input
+            type="text"
+            id="otherActivityInput"
+            placeholder="What did you do? (required)"
+            value="${logState.activityOther}"
+            oninput="setOtherActivity(this.value)"
+            style="width:100%;background:var(--surface);border:1.5px solid ${otherInvalid ? 'var(--danger)' : 'var(--accent3)'};border-radius:8px;padding:10px 14px;color:var(--text);font-size:14px;outline:none;"
+            autofocus
+          />
+          ${otherInvalid ? '<p style="font-size:11px;color:var(--danger);margin-top:5px;">⚠️ Please describe the activity to continue.</p>' : ''}
+        </div>
+      ` : ''}
+    </div>
+
+    <div class="form-group">
+      <label>🥩 75 grams+ Protein today?</label>
+      <div class="toggle-group">
+        <button class="toggle-btn ${logState.protein === true ? 'selected-yes' : ''}" onclick="setProtein(true)">✅ Yes</button>
+        <button class="toggle-btn ${logState.protein === false ? 'selected-no' : ''}" onclick="setProtein(false)">❌ No</button>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>⚠️ Any bad habits? (select all that apply)</label>
+      <div class="toggle-group">
+        <button class="toggle-btn ${logState.badHabits.includes('Smoke') ? 'selected-bad' : ''}" onclick="toggleBad('Smoke')">🚬 Smoke</button>
+        <button class="toggle-btn ${logState.badHabits.includes('Drink') ? 'selected-bad' : ''}" onclick="toggleBad('Drink')">🍺 Drink</button>
+        <button class="toggle-btn ${logState.badHabits.includes('Junk Diet') ? 'selected-bad' : ''}" onclick="toggleBad('Junk Diet')">🍔 Junk</button>
+      </div>
+    </div>
+
+    ${buildPointsPreview()}
+
+    <button class="btn-log" onclick="submitLog()" ${!isFormValid() ? 'disabled' : ''}>
+      Save Today's Log 💾
+    </button>
+  `;
+}
+
+function buildPointsPreview() {
+  let rows = '';
+  let pos = 0, neg = 0;
+
+  if (logState.gym === true)  { pos += 10; rows += row('🏋️ Gym', '+10', 'pos'); }
+  if (logState.gym === false) { rows += row('🏋️ No Gym', '0', 'neg'); }
+
+  if (logState.activity) {
+    const label = logState.activity === 'Other' ? (logState.activityOther.trim() || 'Other (pending)')
+                : logState.activity === 'Sports' ? (logState.sportsType || 'Sports')
+                : logState.activity === 'Running' ? 'Walk/Run'
+                : logState.activity;
+    const icon  = logState.activity === 'Sports' ? sportsIcon(logState.sportsType)
+                : activityIcon(logState.activity);
+    if (logState.activity !== 'Other') { pos += 3; rows += row(`${icon} ${label}`, '+3', 'pos'); }
+    else { rows += row(`🎯 ${label}`, '+3 (if approved)', 'pos'); }
+  }
+
+  if (logState.protein === true)  { pos += 2; rows += row('🥩 75g+ Protein', '+2', 'pos'); }
+  if (logState.protein === false) { rows += row('🥩 Protein missed', '0', 'neg'); }
+
+  logState.badHabits.forEach(b => {
+    const pts = BAD_PTS[b] || -10;
+    neg += Math.abs(pts); rows += row(`${badIcon(b)} ${b}`, `${pts}`, 'neg');
+  });
+
+  const goodDay = logState.gym === true && logState.activity && logState.activity !== 'Other'
+    && logState.protein === true && logState.badHabits.length === 0;
+  if (goodDay) { pos += 4; rows += row('⭐ Good Day Bonus', '+4', 'bonus'); }
+
+  if (!rows) return '';
+
+  const score = pos - neg;
+  return `
+    <div class="points-preview">
+      ${rows}
+      <div class="divider"></div>
+      <div class="row">
+        <span class="label total">Today's Points</span>
+        <span class="val total ${score >= 0 ? 'pos' : 'neg'}">${score > 0 ? '+' : ''}${score} pts</span>
+      </div>
+    </div>
+  `;
+}
+
+function row(label, pts, cls) {
+  return `<div class="row"><span class="label">${label}</span><span class="val ${cls}">${pts}</span></div>`;
+}
+
+function setGym(val) {
+  logState.gym = val;
+  document.getElementById('logFormArea').innerHTML = buildLogFormHTML();
+}
+
+function setSportsType(val) {
+  logState.sportsType = val;
+  const btn = document.querySelector('.btn-log');
+  if (btn) btn.disabled = !isFormValid();
+  const sel = document.getElementById('sportsTypeSelect');
+  if (sel) { sel.style.borderColor = val ? 'var(--accent3)' : 'var(--danger)'; sel.style.color = val ? 'var(--text)' : 'var(--muted)'; }
+}
+
+function setActivity(val) {
+  logState.activity = val;
+  if (val !== 'Other') logState.activityOther = '';
+  if (val !== 'Sports') logState.sportsType = '';
+  document.getElementById('logFormArea').innerHTML = buildLogFormHTML();
+  if (val === 'Other') {
+    const inp = document.getElementById('otherActivityInput');
+    if (inp) inp.focus();
+  }
+}
+
+function setProtein(val) {
+  logState.protein = val;
+  document.getElementById('logFormArea').innerHTML = buildLogFormHTML();
+}
+
+function setOtherActivity(val) {
+  logState.activityOther = val;
+  // re-render only the save button state to avoid losing focus
+  const btn = document.querySelector('.btn-log');
+  if (btn) btn.disabled = !isFormValid();
+  // also update border colour live
+  const inp = document.getElementById('otherActivityInput');
+  if (inp) inp.style.borderColor = val.trim() ? 'var(--accent3)' : 'var(--danger)';
+}
+
+function toggleBad(val) {
+  const idx = logState.badHabits.indexOf(val);
+  if (idx > -1) logState.badHabits.splice(idx, 1);
+  else logState.badHabits.push(val);
+  document.getElementById('logFormArea').innerHTML = buildLogFormHTML();
+}
+
+function editLog() {
+  const log = getUserLog(currentUser);
+  const existing = log[logDate];
+  logState = {
+    gym: existing.gym,
+    activity: existing.activity || null,
+    activityOther: existing.activityOther || '',
+    sportsType: existing.sportsType || '',
+    badHabits: [...(existing.badHabits || [])],
+    protein: existing.protein ?? null,
+  };
+  delete log[logDate];
+  document.getElementById('logFormArea').innerHTML = buildLogFormHTML();
+}
+
+function submitLog() {
+  if (logState.gym === null) return;
+  const log = getUserLog(currentUser);
+  log[logDate] = {
+    gym: logState.gym,
+    activity: logState.activity,
+    activityOther: logState.activity === 'Other' ? logState.activityOther.trim() : '',
+    sportsType: logState.activity === 'Sports' ? logState.sportsType : '',
+    protein: logState.protein,
+    badHabits: [...logState.badHabits],
+  };
+  if (logState.activity === 'Other') {
+    createApprovalRequest(currentUser, logDate, logState.activityOther.trim());
+    showToast('Logged! Waiting for bros to approve "Other" activity ⏳', 'success');
+  } else {
+    saveData();
+    const result = calcDayScore(log[logDate], currentUser, logDate);
+    showToast(`Logged! ${result.score > 0 ? '+' : ''}${result.score} pts 💪`, 'success');
+  }
+  renderLogForm();
+  renderDashboard();
+}
+
+// ── AWARDS / WEEKLY SCORING ──
+
+function getWeeks() {
+  // Weeks run in 7-day blocks starting from START_DATE (Jun 1).
+  const weeks = [];
+  let weekStart = new Date(START_DATE + 'T00:00:00');
+  const end = new Date(END_DATE + 'T00:00:00');
+
+  while (weekStart <= end) {
+    const weekEnd = new Date(weekStart);
+    weekEnd.setDate(weekEnd.getDate() + 6);
+    if (weekEnd > end) weekEnd.setTime(end.getTime());
+
+    weeks.push({
+      start: localDateStr(weekStart),
+      end:   localDateStr(weekEnd),
+    });
+
+    weekStart = new Date(weekEnd);
+    weekStart.setDate(weekStart.getDate() + 1);
+  }
+  return weeks;
+}
+
+function getWeekScore(username, weekStart, weekEnd) {
+  const log = getUserLog(username);
+  const dates = getDateRange(weekStart, weekEnd);
+  let total = 0;
+  dates.forEach(d => {
+    if (log[d]) {
+      const r = calcDayScore(log[d], username, d);
+      if (r) total += r.score;
+    }
+  });
+  return total;
+}
+
+function currentWeekStr() {
+  const today = todayStr();
+  for (const w of getWeeks()) {
+    if (today >= w.start && today <= w.end) return w.start;
+  }
+  return null;
+}
+
+function renderAwards() {
+  const weeks = getWeeks();
+  const today = todayStr();
+
+  // Tally wins per user (only completed weeks = weekEnd < today)
+  const tally = {};
+  USERS.forEach(u => { tally[u.username] = 0; });
+
+  const completedWeeks = weeks.filter(w => w.end < today);
+
+  completedWeeks.forEach(w => {
+    const scores = USERS.map(u => ({ username: u.username, score: getWeekScore(u.username, w.start, w.end) }));
+    const max = Math.max(...scores.map(s => s.score));
+    // Only award if at least one person has logged (score != 0 or someone actually logged)
+    const hasLogs = USERS.some(u => Object.keys(getUserLog(u.username)).some(d => d >= w.start && d <= w.end));
+    if (!hasLogs) return;
+    const winners = scores.filter(s => s.score === max);
+    if (winners.length === 1) tally[winners[0].username]++;
+    // ties: no award given (or split — we'll skip ties for clean results)
+  });
+
+  // Sort by tally desc
+  const sorted = USERS.map(u => ({ ...u, wins: tally[u.username] }))
+    .sort((a, b) => b.wins - a.wins);
+
+  // Dense ranking by wins
+  const crownMap  = ['👑', '🥈', '🥉'];
+  const classMap  = ['rank-1', 'rank-2', 'rank-3'];
+  const colorMap  = ['var(--gold)', 'var(--silver)', 'var(--bronze)'];
+  let dr = 0, prevWins = null;
+  const rankedSorted = sorted.map(u => {
+    if (u.wins !== prevWins) { dr++; prevWins = u.wins; }
+    return { ...u, dr };
+  });
+
+  document.getElementById('awardsTally').innerHTML = rankedSorted.map(u => `
+    <div class="tally-card ${classMap[u.dr - 1] || ''}">
+      <div class="tally-crown">${crownMap[u.dr - 1] || '🎖️'}</div>
+      <div class="tally-avatar" style="background:${u.color}">${getInitial(u.username)}</div>
+      <div class="tally-name">${u.username}</div>
+      <div class="tally-count" style="color:${colorMap[u.dr - 1] || 'var(--muted)'}">${u.wins}</div>
+      <div class="tally-label">Week${u.wins !== 1 ? 's' : ''} Won</div>
+    </div>
+  `).join('');
+
+  // Week list — show all weeks up to current
+  const visibleWeeks = weeks.filter(w => w.start <= today).reverse(); // newest first
+
+  if (!visibleWeeks.length) {
+    document.getElementById('weeksList').innerHTML = `<div class="no-weeks">Challenge hasn't started yet!</div>`;
+    return;
+  }
+
+  const curWeekStart = currentWeekStr();
+
+  document.getElementById('weeksList').innerHTML = visibleWeeks.map((w, i) => {
+    const isCurrent = w.start === curWeekStart;
+    const weekNum = weeks.indexOf(w) + 1;
+    const scores = USERS.map(u => ({ username: u.username, color: u.color, score: getWeekScore(u.username, w.start, w.end) }));
+    const maxScore = Math.max(...scores.map(s => s.score));
+    const hasAnyLog = USERS.some(u => Object.keys(getUserLog(u.username)).some(d => d >= w.start && d <= w.end));
+    const isWinner = (s) => !isCurrent && hasAnyLog && s.score === maxScore && scores.filter(x => x.score === maxScore).length === 1;
+
+    const dateRange = `${formatDate(w.start).replace(/\w+,\s/, '')} – ${formatDate(w.end).replace(/\w+,\s/, '')}`;
+
+    return `
+      <div class="week-row ${isCurrent ? 'current-week' : ''}">
+        <div class="week-row-top">
+          <div class="week-label">
+            <span class="wk-num">Week ${weekNum}</span>
+            &nbsp;·&nbsp; ${dateRange}
+          </div>
+          ${isCurrent ? '<span class="week-badge-live">⚡ IN PROGRESS</span>' : !hasAnyLog ? '<span style="font-size:11px;color:var(--muted)">No logs</span>' : ''}
+        </div>
+        <div class="week-scores">
+          ${scores.map(s => `
+            <div class="ws-item ${isWinner(s) ? 'winner' : ''}">
+              <div class="ws-name">${s.username}</div>
+              <div class="ws-score ${s.score > 0 ? 'pos' : s.score < 0 ? 'neg' : 'zero'}">${s.score > 0 ? '+' : ''}${s.score}</div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+// ── HISTORY ──
+function renderHistory() {
+  const log = getUserLog(currentUser);
+  const yesterday = yesterdayStr();
+
+  // All days from START_DATE up to and including yesterday are "due"
+  const dueDates = getDateRange(START_DATE, yesterday).reverse();
+
+  if (!dueDates.length) {
+    document.getElementById('historyList').innerHTML =
+      `<p style="color:var(--muted);font-size:14px;text-align:center;padding:20px 0">Challenge hasn't started yet!</p>`;
+    return;
+  }
+
+  document.getElementById('historyList').innerHTML = dueDates.map(d => {
+    const entry = log[d];
+
+    if (!entry) {
+      return `
+        <div class="history-entry" style="opacity:0.5;">
+          <div class="he-top">
+            <span class="he-date">${formatDate(d)}</span>
+            <span class="he-pts" style="color:var(--muted)">0 pts</span>
+          </div>
+          <div class="he-tags">
+            <span class="tag" style="background:rgba(125,133,144,0.1);color:var(--muted);border:1px dashed var(--border);">📭 Missed — not logged</span>
+          </div>
+        </div>`;
+    }
+
+    const result = calcDayScore(entry, currentUser, d);
+    return `
+      <div class="history-entry">
+        <div class="he-top">
+          <span class="he-date">${formatDate(d)}</span>
+          <span class="he-pts ${result.score >= 0 ? 'pos' : 'neg'}">${result.score > 0 ? '+' : ''}${result.score} pts</span>
+        </div>
+        <div class="he-tags">
+          ${entry.gym ? '<span class="tag tag-gym">🏋️ Gym</span>' : '<span class="tag tag-bad">❌ No Gym</span>'}
+          ${entry.activity ? `<span class="tag tag-activity">${activityIcon(entry.activity, entry)} ${activityLabel(entry)}</span>` : ''}
+          ${(entry.badHabits || []).map(b => `<span class="tag tag-bad">${badIcon(b)} ${b}</span>`).join('')}
+          ${result.cleanSheet ? '<span class="tag tag-clean">⭐ Good Day</span>' : ''}
+          ${entry.protein === true ? '<span class="tag" style="background:rgba(0,229,160,0.08);color:#7ee8c8;border:1px solid rgba(0,229,160,0.2);">🥩 Protein ✓</span>' : entry.protein === false ? '<span class="tag" style="background:rgba(248,81,73,0.08);color:var(--danger);border:1px solid rgba(248,81,73,0.2);">🥩 Low Protein</span>' : ''}
+        </div>
+      </div>`;
+  }).join('');
+}
+
+// ── ADMIN PANEL ──
+function renderAdminPanel() {
+  const el = document.getElementById('adminPanel');
+  if (!el) return;
+  if (currentUser !== 'Yugal') { el.innerHTML = ''; return; }
+
+  el.innerHTML = `
+    <div class="card" style="border-color:rgba(248,81,73,0.35);margin-top:4px;">
+      <div class="card-title" style="color:var(--danger);">🔑 Admin — Password Reset</div>
+      ${USERS.filter(u => u.username !== 'Yugal').map(u => {
+        const isDefault = isDefaultPassword(u.username);
+        return `
+          <div class="rules-item">
+            <span style="display:flex;align-items:center;gap:10px;">
+              <span class="avatar" style="background:${u.color};width:28px;height:28px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#0d1117">${getInitial(u.username)}</span>
+              ${u.username}
+              <span style="font-size:11px;color:${isDefault ? 'var(--gold)' : 'var(--accent)'}">
+                ${isDefault ? '⚠️ Using default password' : '✅ Custom password set'}
+              </span>
+            </span>
+            <button onclick="adminResetPassword('${u.username}')"
+              style="background:rgba(248,81,73,0.1);border:1px solid rgba(248,81,73,0.35);color:var(--danger);border-radius:6px;padding:5px 12px;font-size:12px;font-weight:700;cursor:pointer;">
+              Reset to DOB
+            </button>
+          </div>`;
+      }).join('')}
+      <p style="font-size:11px;color:var(--muted);margin-top:12px;">Resetting will force the user to set a new password on next login.</p>
+    </div>`;
+}
+
+function adminResetPassword(username) {
+  if (!confirm(`Reset ${username}'s password to their default DOB? They'll be asked to set a new one on next login.`)) return;
+  resetUserPassword(username);
+  renderAdminPanel();
+  showToast(`${username}'s password reset to default ✅`, 'success');
+}
+
+// ── PARTICIPANTS ──
+function renderParticipants() {
+  document.getElementById('participantsList').innerHTML = USERS.map(u => `
+    <div class="rules-item">
+      <span style="display:flex;align-items:center;gap:10px">
+        <span class="avatar" style="background:${u.color};width:28px;height:28px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#0d1117">${getInitial(u.username)}</span>
+        ${u.username}
+        ${u.username === currentUser ? '<span style="font-size:11px;color:var(--muted)">(you)</span>' : ''}
+      </span>
+      <span style="font-size:12px;color:var(--muted)">Active</span>
+    </div>
+  `).join('');
+}
+
+// ── TOAST ──
+function showToast(msg, type = '') {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast ' + type;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2800);
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head><title>Icon Generator</title></head>
+<body>
+<canvas id="c192" width="192" height="192"></canvas>
+<canvas id="c512" width="512" height="512"></canvas>
+<a id="dl192" download="icon-192.png">Download 192</a><br>
+<a id="dl512" download="icon-512.png">Download 512</a>
+<script>
+function drawIcon(canvas) {
+  const s = canvas.width;
+  const ctx = canvas.getContext('2d');
+  // Background
+  ctx.fillStyle = '#0d0f14';
+  ctx.fillRect(0, 0, s, s);
+  // Rounded rect background
+  const r = s * 0.18;
+  ctx.fillStyle = '#1e2530';
+  ctx.beginPath();
+  ctx.moveTo(r, 0); ctx.lineTo(s-r, 0);
+  ctx.quadraticCurveTo(s, 0, s, r);
+  ctx.lineTo(s, s-r);
+  ctx.quadraticCurveTo(s, s, s-r, s);
+  ctx.lineTo(r, s);
+  ctx.quadraticCurveTo(0, s, 0, s-r);
+  ctx.lineTo(0, r);
+  ctx.quadraticCurveTo(0, 0, r, 0);
+  ctx.fill();
+  // Dumbbell bar
+  const bar_y = s * 0.5;
+  const bar_h = s * 0.08;
+  ctx.fillStyle = '#00e5a0';
+  ctx.fillRect(s*0.2, bar_y - bar_h/2, s*0.6, bar_h);
+  // Left weight
+  ctx.fillRect(s*0.15, bar_y - s*0.22, s*0.1, s*0.44);
+  // Right weight
+  ctx.fillRect(s*0.75, bar_y - s*0.22, s*0.1, s*0.44);
+  // Inner left weight
+  ctx.fillStyle = '#00b37e';
+  ctx.fillRect(s*0.23, bar_y - s*0.16, s*0.06, s*0.32);
+  // Inner right weight
+  ctx.fillRect(s*0.71, bar_y - s*0.16, s*0.06, s*0.32);
+}
+
+const c192 = document.getElementById('c192');
+const c512 = document.getElementById('c512');
+drawIcon(c192);
+drawIcon(c512);
+document.getElementById('dl192').href = c192.toDataURL('image/png');
+document.getElementById('dl512').href = c512.toDataURL('image/png');
+</script>
+</body>
+</html>
