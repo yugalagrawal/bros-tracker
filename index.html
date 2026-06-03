@@ -1042,6 +1042,8 @@
 
         <div id="logFormArea"></div>
       </div>
+
+      <div id="broLogsArea"></div>
     </div>
 
     <!-- ── AWARDS ── -->
@@ -1075,6 +1077,7 @@
         <div class="rules-item"><span class="ri-label">🍺 Drink</span><span class="ri-pts neg">−30 pts</span></div>
         <div class="rules-item"><span class="ri-label">🍔 Junk Food</span><span class="ri-pts neg">−10 pts</span></div>
         <div class="rules-item"><span class="ri-label">⭐ Good Day (Gym + Activity + 75g Protein + No Bad Habits)</span><span class="ri-pts bonus">+4 bonus</span></div>
+        <div class="rules-item"><span class="ri-label">🛌 Gym Rest Day — earned every 6 consecutive gym days; use once to skip without breaking streak</span><span class="ri-pts orange">protect</span></div>
         <div class="rules-item"><span class="ri-label">🔥 Gym Streak milestone (every 3rd day: +3, +6, +9…)</span><span class="ri-pts pos">+N pts</span></div>
         <div class="rules-item"><span class="ri-label">⭐ Good Day Streak milestone (every 4th day: +4, +8, +12…)</span><span class="ri-pts pos">+N pts</span></div>
         <div class="rules-item"><span class="ri-label" style="color:var(--muted);font-size:11px;">* Other activity requires approval from both bros</span><span></span></div>
@@ -1212,12 +1215,24 @@ function initApp() {
     // Initial load — hide loading screen once we have data
     dbRef.once('value').then(() => {
       document.getElementById('loadingScreen').style.display = 'none';
-      document.getElementById('loginScreen').style.display = 'flex';
+      const saved = localStorage.getItem('brosCurrentUser');
+      const validUser = saved && USERS.find(u => u.username === saved);
+      if (validUser) {
+        enterApp(saved);
+      } else {
+        document.getElementById('loginScreen').style.display = 'flex';
+      }
     }).catch(() => {
       // Firebase failed — fall back to localStorage
       appData = loadData();
       document.getElementById('loadingScreen').style.display = 'none';
-      document.getElementById('loginScreen').style.display = 'flex';
+      const saved = localStorage.getItem('brosCurrentUser');
+      const validUser = saved && USERS.find(u => u.username === saved);
+      if (validUser) {
+        enterApp(saved);
+      } else {
+        document.getElementById('loginScreen').style.display = 'flex';
+      }
     });
   } else {
     // No Firebase configured — use localStorage
@@ -1275,16 +1290,35 @@ function getPendingApprovalsFor(voter) {
 // ── SCORING ──
 const BAD_PTS = { Smoke: -20, Drink: -30, 'Junk Diet': -10 };
 
+// Core gym-streak calculator (forward scan) with rest-day support.
+// Returns { streak, restDaysAvailable }.
+// Rule: earn 1 rest day at every 6th gym-streak milestone (6, 12, 18…).
+// Rest days accumulate — 12 straight days = 2 banked rest days = 2 safe skips.
+function calcGymStreak(username, upToDate) {
+  const log = getUserLog(username);
+  const dates = getDateRange(START_DATE, upToDate);
+  let streak = 0;
+  let restDaysAvailable = 0;
+  for (const d of dates) {
+    if (log[d] && log[d].gym) {
+      streak++;
+      if (streak % 6 === 0) restDaysAvailable++;
+    } else {
+      if (restDaysAvailable > 0) {
+        restDaysAvailable--;
+        // streak preserved — rest day consumed
+      } else {
+        streak = 0;
+        restDaysAvailable = 0;
+      }
+    }
+  }
+  return { streak, restDaysAvailable };
+}
+
 // Count gym streak ON a specific day (including that day)
 function gymStreakOnDay(username, dateStr) {
-  const log = getUserLog(username);
-  const dates = getDateRange(START_DATE, dateStr);
-  let streak = 0;
-  for (let i = dates.length - 1; i >= 0; i--) {
-    if (log[dates[i]] && log[dates[i]].gym) streak++;
-    else break;
-  }
-  return streak;
+  return calcGymStreak(username, dateStr).streak;
 }
 
 // Count good day streak ON a specific day (including that day)
@@ -1365,16 +1399,7 @@ function getTotalScore(username) {
 }
 
 function getCurrentStreak(username) {
-  const log = getUserLog(username);
-  const yesterday = yesterdayStr();
-  const dates = getDateRange(START_DATE, yesterday);
-  let streak = 0;
-  for (let i = dates.length - 1; i >= 0; i--) {
-    const d = dates[i];
-    if (log[d] && log[d].gym) streak++;
-    else break;
-  }
-  return streak;
+  return calcGymStreak(username, yesterdayStr()).streak;
 }
 
 function getGoodDayStreak(username) {
@@ -1646,6 +1671,7 @@ function submitNewPassword() {
 
 function enterApp(username) {
   currentUser = username;
+  localStorage.setItem('brosCurrentUser', username);
   document.getElementById('app').style.display = 'block';
   const av = document.getElementById('topAvatar');
   av.style.background = getColor(currentUser);
@@ -1672,6 +1698,7 @@ initApp();
 
 function doLogout() {
   currentUser = null;
+  localStorage.removeItem('brosCurrentUser');
   document.getElementById('app').style.display = 'none';
   document.getElementById('changePassScreen').style.display = 'none';
   document.getElementById('forgotPassScreen').style.display = 'none';
@@ -1784,12 +1811,10 @@ function renderApprovals() {
 }
 
 function renderLeaderboard() {
-  const scores = USERS.map(u => ({
-    ...u,
-    total: getTotalScore(u.username),
-    streak: getCurrentStreak(u.username),
-    logged: getLoggedDays(u.username),
-  })).sort((a, b) => b.total - a.total);
+  const scores = USERS.map(u => {
+    const { streak, restDaysAvailable } = calcGymStreak(u.username, yesterdayStr());
+    return { ...u, total: getTotalScore(u.username), streak, restDaysAvailable, logged: getLoggedDays(u.username) };
+  }).sort((a, b) => b.total - a.total);
 
   // Dense ranking: same score = same medal, next unique score = next medal
   const medalMap = ['🥇', '🥈', '🥉'];
@@ -1810,6 +1835,7 @@ function renderLeaderboard() {
         <div class="lb-sub">
           ${u.logged} days logged
           ${u.streak >= 3 ? `&nbsp;<span class="streak-badge">🔥 ${u.streak}-day streak</span>` : u.streak > 0 ? `&nbsp;<span style="font-size:11px;color:var(--muted)">🔥 ${u.streak} days</span>` : ''}
+          ${u.restDaysAvailable > 0 ? `&nbsp;<span style="font-size:11px;font-weight:700;color:var(--gold)">🛌 ${u.restDaysAvailable} rest day${u.restDaysAvailable > 1 ? 's' : ''}</span>` : ''}
         </div>
       </div>
       <div class="lb-score">${u.total}<br><span class="pts">pts</span></div>
@@ -1831,7 +1857,7 @@ function renderMyStats() {
     return e.gym && e.activity && (e.badHabits || []).length === 0;
   }).length;
   const totalDays = allDates.length;
-  const gymStreak     = getCurrentStreak(currentUser);
+  const { streak: gymStreak, restDaysAvailable } = calcGymStreak(currentUser, yesterdayStr());
   const goodDayStreak = getGoodDayStreak(currentUser);
   const total         = getTotalScore(currentUser);
 
@@ -1846,7 +1872,7 @@ function renderMyStats() {
     </div>
     <div class="stat-tile">
       <div class="st-val" style="color:var(--accent2)">${gymStreak}</div>
-      <div class="st-label">🏋️ Gym Streak</div>
+      <div class="st-label">🏋️ Gym Streak${restDaysAvailable > 0 ? `<br><span style="font-size:10px;color:var(--gold);font-weight:700;">🛌 ${restDaysAvailable} Rest Day${restDaysAvailable > 1 ? 's' : ''}</span>` : ''}</div>
     </div>
     <div class="stat-tile">
       <div class="st-val" style="color:var(--gold)">${goodDayStreak}</div>
@@ -1933,26 +1959,37 @@ function yesterdayStr() {
 }
 
 function changeLogDate(dir) {
-  // Navigation locked — only yesterday is loggable
+  const dates = getDateRange(START_DATE, yesterdayStr());
+  const idx = dates.indexOf(logDate);
+  const newIdx = idx + dir;
+  if (newIdx >= 0 && newIdx < dates.length) {
+    logDate = dates[newIdx];
+    renderLogForm();
+  }
 }
 
 function renderLogForm() {
   const yesterday = yesterdayStr();
-  logDate = yesterday; // always lock to yesterday
+  // Default to yesterday on first load
+  if (!logDate || logDate > yesterday) logDate = yesterday;
 
-  document.getElementById('logDateLabel').textContent = formatDate(yesterday);
-  document.getElementById('prevDayBtn').disabled = true;
-  document.getElementById('nextDayBtn').disabled = true;
+  const dates = getDateRange(START_DATE, yesterday);
+  const idx = dates.indexOf(logDate);
+  document.getElementById('logDateLabel').textContent = formatDate(logDate);
+  document.getElementById('prevDayBtn').disabled = idx <= 0;
+  document.getElementById('nextDayBtn').disabled = idx >= dates.length - 1;
 
+  const isPastGrace = logDate < yesterday; // only yesterday is within grace period
   const log = getUserLog(currentUser);
   const existing = log[logDate];
   const area = document.getElementById('logFormArea');
 
   if (existing) {
     const result = calcDayScore(existing, currentUser, logDate);
+    const canEdit = !isPastGrace;
     area.innerHTML = `
       <div class="already-logged">
-        ✅ Already logged for this day!<br>
+        ${isPastGrace ? '📅 Past log (read-only)' : '✅ Already logged for this day!'}<br>
         <span style="font-size:22px;font-weight:800;color:${result.score >= 0 ? 'var(--accent)' : 'var(--danger)'};display:block;margin-top:8px;">${result.score > 0 ? '+' : ''}${result.score} pts</span>
         <div class="he-tags" style="justify-content:center;margin-top:10px;">
           ${existing.gym ? '<span class="tag tag-gym">🏋️ Gym</span>' : '<span class="tag tag-bad">❌ No Gym</span>'}
@@ -1972,16 +2009,65 @@ function renderLogForm() {
             ${voterSummary ? `<div style="margin-top:4px;">${voterSummary}</div>` : ''}
           </div>`;
         })() : ''}
-        <br>
-        <button onclick="editLog()" style="background:var(--card);border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:8px 16px;font-size:12px;cursor:pointer;margin-top:4px;">✏️ Edit Log</button>
+        ${canEdit ? '<br><button onclick="editLog()" style="background:var(--card);border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:8px 16px;font-size:12px;cursor:pointer;margin-top:4px;">✏️ Edit Log</button>' : ''}
       </div>
     `;
+    renderBroLogs();
     return;
   }
 
-  // initialize logState from nothing
+  if (isPastGrace) {
+    area.innerHTML = `
+      <div style="text-align:center;padding:20px 0;color:var(--muted);">
+        <div style="font-size:32px;margin-bottom:10px;">📭</div>
+        <div style="font-size:14px;font-weight:600;color:var(--danger);margin-bottom:6px;">Not logged</div>
+        <div style="font-size:12px;">Grace period has passed — this day can no longer be logged.</div>
+      </div>`;
+    renderBroLogs();
+    return;
+  }
+
+  // Yesterday, not yet logged — show the form
   logState = { gym: null, activity: null, activityOther: '', sportsType: '', protein: null, badHabits: [] };
   area.innerHTML = buildLogFormHTML();
+  renderBroLogs();
+}
+
+function renderBroLogs() {
+  const el = document.getElementById('broLogsArea');
+  if (!el) return;
+  const bros = USERS.filter(u => u.username !== currentUser);
+  el.innerHTML = bros.map(bro => {
+    const entry = getUserLog(bro.username)[logDate];
+    const broColor = bro.color;
+    const initial = getInitial(bro.username);
+    let content;
+    if (!entry) {
+      content = `<div style="color:var(--muted);font-size:13px;text-align:center;padding:6px 0;">📭 Not logged yet</div>`;
+    } else {
+      const result = calcDayScore(entry, bro.username, logDate);
+      content = `
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+          <span style="font-size:12px;color:var(--muted)">Yesterday's log</span>
+          <span style="font-size:18px;font-weight:800;color:${result.score >= 0 ? 'var(--accent)' : 'var(--danger)'}">${result.score > 0 ? '+' : ''}${result.score} pts</span>
+        </div>
+        <div class="he-tags">
+          ${entry.gym ? '<span class="tag tag-gym">🏋️ Gym</span>' : '<span class="tag tag-bad">❌ No Gym</span>'}
+          ${entry.activity ? `<span class="tag tag-activity">${activityIcon(entry.activity, entry)} ${activityLabel(entry)}</span>` : ''}
+          ${(entry.badHabits || []).map(b => `<span class="tag tag-bad">${badIcon(b)} ${b}</span>`).join('')}
+          ${result.cleanSheet ? '<span class="tag tag-clean">⭐ Good Day</span>' : ''}
+          ${entry.protein === true ? '<span class="tag" style="background:rgba(0,229,160,0.08);color:#7ee8c8;border:1px solid rgba(0,229,160,0.2);">🥩 Protein ✓</span>' : entry.protein === false ? '<span class="tag" style="background:rgba(248,81,73,0.08);color:var(--danger);border:1px solid rgba(248,81,73,0.2);">🥩 Low Protein</span>' : ''}
+        </div>`;
+    }
+    return `
+      <div class="card" style="padding:14px;margin-bottom:12px;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
+          <div style="width:34px;height:34px;border-radius:50%;background:${broColor};display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#0d1117;flex-shrink:0">${initial}</div>
+          <div style="font-size:14px;font-weight:700;">${bro.username}'s Log</div>
+        </div>
+        ${content}
+      </div>`;
+  }).join('');
 }
 
 function isFormValid() {
