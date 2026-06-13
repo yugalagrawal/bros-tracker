@@ -879,6 +879,114 @@
   ::-webkit-scrollbar { width: 6px; height: 6px; }
   ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  /* ── STUDY / PRODUCTIVITY BOARD ── */
+  .study-hero {
+    background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #1e3a5f 100%);
+    border-radius: var(--radius);
+    padding: 22px 18px;
+    margin-bottom: 14px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(49,46,129,0.35);
+  }
+  .study-hero::before {
+    content: '📚';
+    position: absolute;
+    right: 18px; top: 16px;
+    font-size: 36px; opacity: 0.18;
+  }
+  .study-hero-label {
+    font-size: 10px; font-weight: 800; text-transform: uppercase;
+    letter-spacing: 1.4px; color: #a5b4fc; margin-bottom: 10px;
+  }
+  .study-vs {
+    display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  }
+  .study-player {
+    flex: 1; text-align: center;
+  }
+  .study-player-avatar {
+    width: 48px; height: 48px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px; font-weight: 800; color: #0d1117;
+    margin: 0 auto 6px;
+  }
+  .study-player-name { font-size: 13px; font-weight: 700; color: #e0e7ff; }
+  .study-player-score { font-size: 30px; font-weight: 800; line-height: 1.1; }
+  .study-player-sub { font-size: 11px; color: #a5b4fc; margin-top: 2px; }
+  .study-vs-badge {
+    font-size: 13px; font-weight: 800; color: #6366f1;
+    background: rgba(99,102,241,0.18); border: 1px solid rgba(99,102,241,0.3);
+    border-radius: 20px; padding: 4px 10px; flex-shrink: 0;
+  }
+  .study-leading-banner {
+    margin-top: 14px; padding: 8px 12px;
+    background: rgba(165,180,252,0.1); border: 1px solid rgba(165,180,252,0.2);
+    border-radius: 8px; font-size: 12px; font-weight: 600; color: #c7d2fe;
+    text-align: center;
+  }
+
+  .study-log-card {
+    background: #fff; border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 18px; margin-bottom: 14px;
+    box-shadow: var(--shadow);
+  }
+  .study-hours-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 10px;
+  }
+  .study-hours-grid .study-hour-btn { min-height: 64px; font-size: 14px; }
+  .study-hour-btn {
+    padding: 14px 8px; border: 1.5px solid var(--border);
+    border-radius: var(--radius-sm); background: #f8faff;
+    color: var(--muted); font-size: 13px; font-weight: 700;
+    cursor: pointer; text-align: center; transition: all 0.15s;
+    -webkit-tap-highlight-color: transparent;
+    display: flex; flex-direction: column; align-items: center; gap: 2px;
+  }
+  .study-hour-btn:active { transform: scale(0.95); }
+  .study-hour-btn .sh-pts { font-size: 10px; font-weight: 600; }
+  .study-hour-btn.selected-0 {
+    background: rgba(0,196,140,0.1); border-color: var(--accent); color: var(--accent);
+  }
+  .study-hour-btn.selected-1 {
+    background: rgba(99,102,241,0.1); border-color: #6366f1; color: #6366f1;
+  }
+  .study-hour-btn.selected-2 {
+    background: rgba(245,158,11,0.1); border-color: var(--gold); color: var(--gold);
+  }
+
+  .study-week-row {
+    background: #fff; border: 1px solid var(--border);
+    border-radius: var(--radius-sm); padding: 14px 16px; margin-bottom: 8px;
+    box-shadow: 0 2px 8px rgba(99,120,180,0.06);
+  }
+  .study-week-row.current-week { border-color: #818cf8; background: #f5f3ff; }
+  .study-week-vs {
+    display: flex; gap: 8px; margin-top: 10px;
+  }
+  .study-ws {
+    flex: 1; background: #f8faff; border: 1px solid var(--border);
+    border-radius: 8px; padding: 10px 6px; text-align: center; position: relative;
+  }
+  .study-ws.winner {
+    border-color: rgba(227,179,65,0.5); background: rgba(227,179,65,0.07);
+  }
+  .study-ws.winner::after {
+    content: '👑'; position: absolute; top: -10px; left: 50%;
+    transform: translateX(-50%); font-size: 14px;
+  }
+  .study-ws-name { font-size: 11px; color: var(--muted); font-weight: 600; margin-bottom: 2px; }
+  .study-ws-score { font-size: 16px; font-weight: 800; }
+  .study-ws-score.pos { color: #6366f1; }
+  .study-ws-score.neg { color: var(--danger); }
+  .study-ws-score.zero { color: var(--muted); }
+
+  .study-readonly-banner {
+    background: rgba(99,102,241,0.08); border: 1px solid rgba(99,102,241,0.2);
+    border-radius: 10px; padding: 12px 16px; margin-bottom: 14px;
+    font-size: 13px; font-weight: 600; color: #6366f1; text-align: center;
+  }
 </style>
 </head>
 <body>
@@ -997,6 +1105,10 @@
       <span class="nav-icon">📋</span>
       <span class="nav-label">Rules</span>
     </div>
+    <div class="nav-tab" data-tab="study" onclick="switchTab('study')">
+      <span class="nav-icon">📚</span>
+      <span class="nav-label">Study</span>
+    </div>
   </div>
 
   <div class="main">
@@ -1097,6 +1209,25 @@
       </div>
 
       <div id="adminPanel"></div>
+    </div>
+
+    <!-- ── STUDY / PRODUCTIVITY BOARD ── -->
+    <div class="section" id="tab-study">
+      <div id="studyReadonlyBanner"></div>
+      <div id="studyHero"></div>
+      <div id="studyLogArea"></div>
+      <div class="card" style="padding:16px;">
+        <div class="card-title">📈 Cumulative Study Points</div>
+        <div id="studyChartArea"></div>
+      </div>
+      <div class="card" style="padding:14px;">
+        <div class="card-title">🏆 All-Time Weekly Wins</div>
+        <div class="awards-tally" id="studyTally"></div>
+      </div>
+      <div class="card" style="padding:14px;">
+        <div class="card-title">📅 Week-by-Week Results</div>
+        <div id="studyWeeksList"></div>
+      </div>
     </div>
 
   </div>
@@ -1760,6 +1891,7 @@ function switchTab(tab) {
   if (tab === 'dashboard') renderDashboard();
   if (tab === 'awards') renderAwards();
   if (tab === 'rules') renderAdminPanel();
+  if (tab === 'study') renderStudyTab();
 }
 
 // ── RENDER ALL ──
@@ -1768,6 +1900,9 @@ function renderAll() {
   renderLogForm();
   renderHistory();
   renderParticipants();
+  // Re-render study tab if it's active
+  const studySection = document.getElementById('tab-study');
+  if (studySection && studySection.classList.contains('active')) renderStudyTab();
 }
 
 // ── DASHBOARD ──
@@ -2514,6 +2649,403 @@ function renderParticipants() {
       <span style="font-size:12px;color:var(--muted)">Active</span>
     </div>
   `).join('');
+}
+
+// ── PRODUCTIVITY / STUDY BOARD ──
+const STUDY_START = '2026-06-14';
+const STUDY_USERS = ['Vikas', 'Dushyant'];
+const STUDY_COLORS = { Vikas: '#7c5cfc', Dushyant: '#ff6b35' };
+let studyLogState = { hours: null }; // hours = 0..8
+
+function getStudyData() {
+  if (!appData._study) appData._study = {};
+  return appData._study;
+}
+
+function getStudyLog(username) {
+  const s = getStudyData();
+  if (!s[username]) s[username] = {};
+  return s[username];
+}
+
+function calcStudyPoints(hours) {
+  if (hours === null || hours === undefined) return -20;
+  if (hours >= 4) return 20;
+  if (hours >= 2) return 5;
+  return -20; // 0-2h same as skip
+}
+
+function studyPointsLabel(hours) {
+  if (hours >= 4) return '+20';
+  if (hours >= 2) return '+5';
+  return '-20';
+}
+
+function getStudyTotal(username) {
+  const log = getStudyLog(username);
+  const yesterday = yesterdayStr();
+  if (yesterday < STUDY_START) return 0;
+  const dates = getDateRange(STUDY_START, yesterday);
+  let total = 0;
+  dates.forEach(d => {
+    const entry = log[d];
+    total += (entry !== undefined && entry !== null) ? calcStudyPoints(entry.hours) : -20;
+  });
+  return total;
+}
+
+function getStudyWeeks() {
+  const weeks = [];
+  let weekStart = new Date(STUDY_START + 'T00:00:00');
+  const end = new Date(END_DATE + 'T00:00:00');
+  while (weekStart <= end) {
+    const weekEnd = new Date(weekStart);
+    weekEnd.setDate(weekEnd.getDate() + 6);
+    if (weekEnd > end) weekEnd.setTime(end.getTime());
+    weeks.push({ start: localDateStr(weekStart), end: localDateStr(weekEnd) });
+    weekStart = new Date(weekEnd);
+    weekStart.setDate(weekStart.getDate() + 1);
+  }
+  return weeks;
+}
+
+function getStudyWeekScore(username, weekStart, weekEnd) {
+  const log = getStudyLog(username);
+  const yesterday = yesterdayStr();
+  const start = weekStart < STUDY_START ? STUDY_START : weekStart;
+  const end = weekEnd > yesterday ? yesterday : weekEnd;
+  if (start > end) return null; // week not started yet
+  const dates = getDateRange(start, end);
+  let total = 0;
+  dates.forEach(d => {
+    const entry = log[d];
+    total += (entry !== undefined && entry !== null) ? calcStudyPoints(entry.hours) : -20;
+  });
+  return total;
+}
+
+function renderStudyTab() {
+  renderStudyHero();
+  renderStudyLogArea();
+  renderStudyChart();
+  renderStudyAwards();
+  renderStudyWeeks();
+}
+
+function renderStudyHero() {
+  const isReadonly = currentUser === 'Yugal';
+  const banner = document.getElementById('studyReadonlyBanner');
+  banner.innerHTML = isReadonly
+    ? `<div class="study-readonly-banner">👁️ Spectator Mode — Yugal watching the grind</div>`
+    : '';
+
+  const [v, d] = STUDY_USERS;
+  const vTotal = getStudyTotal(v);
+  const dTotal = getStudyTotal(d);
+  const yesterday = yesterdayStr();
+
+  const vLog = getStudyLog(v);
+  const dLog = getStudyLog(d);
+  const vYest = yesterday >= STUDY_START ? vLog[yesterday] : undefined;
+  const dYest = yesterday >= STUDY_START ? dLog[yesterday] : undefined;
+  const vYestPts = yesterday < STUDY_START ? null : (vYest !== undefined ? calcStudyPoints(vYest.hours) : -20);
+  const dYestPts = yesterday < STUDY_START ? null : (dYest !== undefined ? calcStudyPoints(dYest.hours) : -20);
+
+  const gap = Math.abs(vTotal - dTotal);
+  let leadMsg = '';
+  if (vTotal === dTotal) leadMsg = '🤝 Tied! The race is neck and neck.';
+  else if (vTotal > dTotal) leadMsg = `Vikas leads by <b>${gap} pts</b> 💪`;
+  else leadMsg = `Dushyant leads by <b>${gap} pts</b> 💪`;
+
+  const ptsColor = (pts) => pts >= 0 ? '#6ee7b7' : '#fca5a5';
+
+  document.getElementById('studyHero').innerHTML = `
+    <div class="study-hero">
+      <div class="study-hero-label">📚 Productivity Battle · Jun 14 → Dec 31</div>
+      <div class="study-vs">
+        <div class="study-player">
+          <div class="study-player-avatar" style="background:${STUDY_COLORS[v]}">${v[0]}</div>
+          <div class="study-player-name">${v}</div>
+          <div class="study-player-score" style="color:${vTotal >= 0 ? '#a5f3d0' : '#fca5a5'}">${vTotal > 0 ? '+' : ''}${vTotal}</div>
+          <div class="study-player-sub">total pts</div>
+          ${vYestPts !== null ? `<div style="font-size:11px;color:${ptsColor(vYestPts)};margin-top:4px;font-weight:600">Yesterday: ${vYestPts > 0 ? '+' : ''}${vYestPts}</div>` : ''}
+        </div>
+        <div class="study-vs-badge">VS</div>
+        <div class="study-player">
+          <div class="study-player-avatar" style="background:${STUDY_COLORS[d]}">${d[0]}</div>
+          <div class="study-player-name">${d}</div>
+          <div class="study-player-score" style="color:${dTotal >= 0 ? '#a5f3d0' : '#fca5a5'}">${dTotal > 0 ? '+' : ''}${dTotal}</div>
+          <div class="study-player-sub">total pts</div>
+          ${dYestPts !== null ? `<div style="font-size:11px;color:${ptsColor(dYestPts)};margin-top:4px;font-weight:600">Yesterday: ${dYestPts > 0 ? '+' : ''}${dYestPts}</div>` : ''}
+        </div>
+      </div>
+      <div class="study-leading-banner">${leadMsg}</div>
+    </div>`;
+}
+
+function renderStudyLogArea() {
+  const el = document.getElementById('studyLogArea');
+  const isReadonly = currentUser === 'Yugal';
+
+  if (isReadonly) {
+    // Show both players' yesterday entries
+    const yesterday = yesterdayStr();
+    if (yesterday < STUDY_START) { el.innerHTML = ''; return; }
+    el.innerHTML = STUDY_USERS.map(u => {
+      const entry = getStudyLog(u)[yesterday];
+      const pts = entry !== undefined ? calcStudyPoints(entry.hours) : -20;
+      const logged = entry !== undefined;
+      return `
+        <div class="card" style="padding:14px;margin-bottom:12px;">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+            <div style="width:34px;height:34px;border-radius:50%;background:${STUDY_COLORS[u]};display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:800;color:#0d1117">${u[0]}</div>
+            <div style="font-size:14px;font-weight:700;">${u} — Yesterday</div>
+          </div>
+          ${logged
+            ? `<div style="display:flex;justify-content:space-between;align-items:center;">
+                <span style="color:var(--muted);font-size:13px;">🕒 ${entry.hours}h studied</span>
+                <span style="font-size:18px;font-weight:800;color:${pts>=0?'#6366f1':'var(--danger)'}">${pts>0?'+':''}${pts} pts</span>
+              </div>`
+            : `<div style="color:var(--danger);font-size:13px;font-weight:600;">⚠️ Skipped — −20 pts</div>`}
+        </div>`;
+    }).join('');
+    return;
+  }
+
+  // Editable for Vikas / Dushyant only
+  if (!STUDY_USERS.includes(currentUser)) { el.innerHTML = ''; return; }
+
+  const yesterday = yesterdayStr();
+  if (yesterday < STUDY_START) {
+    el.innerHTML = `<div class="card" style="padding:18px;text-align:center;color:var(--muted);">
+      <div style="font-size:28px;margin-bottom:8px;">⏳</div>
+      <div style="font-weight:600;font-size:14px;">Study tracking starts Jun 14, 2026</div>
+    </div>`;
+    return;
+  }
+
+  const log = getStudyLog(currentUser);
+  const existing = log[yesterday];
+
+  if (existing !== undefined) {
+    const pts = calcStudyPoints(existing.hours);
+    el.innerHTML = `
+      <div class="study-log-card">
+        <div class="card-title">📝 Yesterday's Study Log</div>
+        <div class="already-logged" style="margin-top:0;">
+          ✅ Logged for ${formatDate(yesterday)}<br>
+          <span style="font-size:22px;font-weight:800;color:#6366f1;display:block;margin-top:8px;">${pts > 0 ? '+' : ''}${pts} pts</span>
+          <span style="font-size:13px;color:var(--muted);margin-top:4px;display:block;">🕒 ${existing.hours} hour${existing.hours !== 1 ? 's' : ''} studied</span>
+        </div>
+      </div>`;
+    return;
+  }
+
+  el.innerHTML = `
+    <div class="study-log-card">
+      <div class="card-title">📝 Log Yesterday's Study — ${formatDate(yesterday)}</div>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:4px;">How many hours did you study?</p>
+      <div class="study-hours-grid" id="studyHoursGrid">
+        ${[
+          { label: '0 – 2 hrs', hours: 1, band: 0 },
+          { label: '2 – 4 hrs', hours: 2, band: 1 },
+          { label: '4 + hrs',   hours: 4, band: 2 },
+        ].map(({ label, hours, band }) => {
+          const pts = calcStudyPoints(hours);
+          const sel = studyLogState.hours === hours ? `selected-${band}` : '';
+          const color = band === 2 ? 'var(--gold)' : band === 1 ? '#6366f1' : 'var(--danger)';
+          return `<button class="study-hour-btn ${sel}" onclick="setStudyHours(${hours})">
+            <span>${label}</span>
+            <span class="sh-pts" style="color:${color}">${pts > 0 ? '+' : ''}${pts}</span>
+          </button>`;
+        }).join('')}
+      </div>
+      <div style="margin-top:16px;">
+        <button class="btn-log" id="studySubmitBtn" onclick="submitStudyLog()"
+          ${studyLogState.hours === null ? 'disabled' : ''}
+          style="background:linear-gradient(135deg,#6366f1,#4f46e5);">
+          Save Study Log 📚
+        </button>
+      </div>
+      <p style="font-size:11px;color:var(--danger);text-align:center;margin-top:10px;">⚠️ 0–2 hrs or skip = −20 pts. Need 2+ hours to score.</p>
+    </div>`;
+}
+
+function setStudyHours(h) {
+  studyLogState.hours = h;
+  renderStudyLogArea();
+}
+
+function submitStudyLog() {
+  if (studyLogState.hours === null) return;
+  const yesterday = yesterdayStr();
+  const log = getStudyLog(currentUser);
+  log[yesterday] = { hours: studyLogState.hours };
+  saveData();
+  const pts = calcStudyPoints(studyLogState.hours);
+  showToast(`Study logged! ${pts > 0 ? '+' : ''}${pts} pts 📚`, 'success');
+  studyLogState.hours = null;
+  renderStudyTab();
+}
+
+function renderStudyChart() {
+  const el = document.getElementById('studyChartArea');
+  const yesterday = yesterdayStr();
+  if (yesterday < STUDY_START) {
+    el.innerHTML = `<p style="color:var(--muted);font-size:13px;text-align:center;padding:20px 0">Chart will appear once logging starts on Jun 14.</p>`;
+    return;
+  }
+  const dates = getDateRange(STUDY_START, yesterday);
+  if (!dates.length) { el.innerHTML = ''; return; }
+
+  const series = STUDY_USERS.map(u => {
+    let cum = 0;
+    return {
+      username: u, color: STUDY_COLORS[u],
+      points: dates.map(d => {
+        const entry = getStudyLog(u)[d];
+        cum += (entry !== undefined && entry !== null) ? calcStudyPoints(entry.hours) : -20;
+        return cum;
+      }),
+    };
+  });
+
+  const W = 560, H = 200;
+  const padL = 46, padR = 12, padT = 12, padB = 30;
+  const innerW = W - padL - padR;
+  const innerH = H - padT - padB;
+
+  const allVals = series.flatMap(s => s.points);
+  const minV = Math.min(0, ...allVals);
+  const maxV = Math.max(1, ...allVals);
+  const range = maxV - minV || 1;
+
+  const xScale = (i) => padL + (i / Math.max(dates.length - 1, 1)) * innerW;
+  const yScale = (v) => padT + innerH - ((v - minV) / range) * innerH;
+
+  const yTicks = 4;
+  let gridLines = '', yLabels = '';
+  for (let i = 0; i <= yTicks; i++) {
+    const v = minV + (range / yTicks) * i;
+    const y = yScale(v);
+    gridLines += `<line x1="${padL}" y1="${y.toFixed(1)}" x2="${W - padR}" y2="${y.toFixed(1)}" stroke="#e4eaf5" stroke-width="1"/>`;
+    yLabels += `<text x="${padL - 6}" y="${(y + 4).toFixed(1)}" text-anchor="end" fill="#8896a8" font-size="10">${Math.round(v)}</text>`;
+  }
+
+  const step = Math.max(1, Math.floor(dates.length / 6));
+  let xLabels = '';
+  for (let i = 0; i < dates.length; i += step) {
+    const x = xScale(i);
+    const d = new Date(dates[i] + 'T00:00:00');
+    xLabels += `<text x="${x.toFixed(1)}" y="${H - 6}" text-anchor="middle" fill="#8896a8" font-size="10">${d.toLocaleDateString('en-US',{month:'short',day:'numeric'})}</text>`;
+  }
+
+  const zeroY = yScale(0);
+  const zeroLine = `<line x1="${padL}" y1="${zeroY.toFixed(1)}" x2="${W - padR}" y2="${zeroY.toFixed(1)}" stroke="#d1d5db" stroke-width="1.5" stroke-dasharray="4,3"/>`;
+
+  let paths = '', dots = '';
+  series.forEach(s => {
+    if (!s.points.length) return;
+    const pts = s.points.map((v, i) => `${xScale(i).toFixed(1)},${yScale(v).toFixed(1)}`).join(' ');
+    paths += `<polyline points="${pts}" fill="none" stroke="${s.color}" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round" opacity="0.9"/>`;
+    const lastX = xScale(s.points.length - 1);
+    const lastY = yScale(s.points[s.points.length - 1]);
+    dots += `<circle cx="${lastX.toFixed(1)}" cy="${lastY.toFixed(1)}" r="4" fill="${s.color}" stroke="#fff" stroke-width="2"/>`;
+  });
+
+  el.innerHTML = `
+    <div class="chart-wrap">
+      <svg viewBox="0 0 ${W} ${H}" width="100%" style="max-height:200px;">
+        ${gridLines}${zeroLine}${yLabels}${xLabels}${paths}${dots}
+      </svg>
+    </div>
+    <div class="chart-legend">
+      ${series.map(s => `
+        <div class="chart-legend-item">
+          <div class="chart-legend-dot" style="background:${s.color}"></div>
+          <span style="color:${s.color}">${s.username}</span>
+          <span style="color:var(--muted)">${s.points[s.points.length-1] >= 0 ? '+' : ''}${s.points[s.points.length-1] || 0} pts</span>
+        </div>`).join('')}
+    </div>`;
+}
+
+function renderStudyAwards() {
+  const weeks = getStudyWeeks();
+  const today = todayStr();
+  const tally = { Vikas: 0, Dushyant: 0 };
+
+  weeks.filter(w => w.end < today).forEach(w => {
+    const scores = STUDY_USERS.map(u => ({ u, s: getStudyWeekScore(u, w.start, w.end) }));
+    if (scores.some(x => x.s === null)) return;
+    const max = Math.max(...scores.map(x => x.s));
+    const winners = scores.filter(x => x.s === max);
+    if (winners.length === 1) tally[winners[0].u]++;
+  });
+
+  const sorted = STUDY_USERS.map(u => ({ u, wins: tally[u], color: STUDY_COLORS[u] }))
+    .sort((a, b) => b.wins - a.wins);
+
+  const crownMap = ['👑', '🥈'];
+  const classMap = ['rank-1', 'rank-2'];
+  const colorMap = ['var(--gold)', 'var(--silver)'];
+
+  document.getElementById('studyTally').innerHTML = sorted.map((x, i) => `
+    <div class="tally-card ${classMap[i] || ''}">
+      <div class="tally-crown">${crownMap[i] || '🎖️'}</div>
+      <div class="tally-avatar" style="background:${x.color}">${x.u[0]}</div>
+      <div class="tally-name">${x.u}</div>
+      <div class="tally-count" style="color:${colorMap[i] || 'var(--muted)'}">${x.wins}</div>
+      <div class="tally-label">Week${x.wins !== 1 ? 's' : ''} Won</div>
+    </div>
+  `).join('');
+}
+
+function renderStudyWeeks() {
+  const weeks = getStudyWeeks();
+  const today = todayStr();
+  const visible = weeks.filter(w => w.start <= today).reverse();
+
+  if (!visible.length) {
+    document.getElementById('studyWeeksList').innerHTML = `<div class="no-weeks">Study tracking starts Jun 14!</div>`;
+    return;
+  }
+
+  const curWeek = weeks.find(w => today >= w.start && today <= w.end);
+  const curWeekStart = curWeek ? curWeek.start : null;
+
+  document.getElementById('studyWeeksList').innerHTML = visible.map((w) => {
+    const isCurrent = w.start === curWeekStart;
+    const weekNum = weeks.indexOf(w) + 1;
+    const scores = STUDY_USERS.map(u => ({ u, color: STUDY_COLORS[u], score: getStudyWeekScore(u, w.start, w.end) }));
+    const validScores = scores.filter(x => x.score !== null);
+    const maxScore = validScores.length ? Math.max(...validScores.map(x => x.score)) : null;
+    const isWinner = (s) => !isCurrent && s.score !== null && s.score === maxScore
+      && validScores.filter(x => x.score === maxScore).length === 1;
+
+    const dateRange = `${formatDate(w.start).replace(/\w+,\s/, '')} – ${formatDate(w.end).replace(/\w+,\s/, '')}`;
+
+    return `
+      <div class="study-week-row ${isCurrent ? 'current-week' : ''}">
+        <div class="week-row-top">
+          <div class="week-label">
+            <span class="wk-num">Week ${weekNum}</span>&nbsp;·&nbsp;${dateRange}
+          </div>
+          ${isCurrent ? '<span class="week-badge-live" style="background:rgba(99,102,241,0.15);color:#6366f1;border-color:rgba(99,102,241,0.3);">⚡ IN PROGRESS</span>' : ''}
+        </div>
+        <div class="study-week-vs">
+          ${scores.map(s => {
+            const sc = s.score;
+            return `
+              <div class="study-ws ${isWinner(s) ? 'winner' : ''}">
+                <div class="study-ws-name">${s.u}</div>
+                <div class="study-ws-score ${sc === null ? 'zero' : sc > 0 ? 'pos' : sc < 0 ? 'neg' : 'zero'}">
+                  ${sc === null ? '—' : (sc > 0 ? '+' : '') + sc}
+                </div>
+              </div>`;
+          }).join('')}
+        </div>
+      </div>`;
+  }).join('');
 }
 
 // ── TOAST ──
