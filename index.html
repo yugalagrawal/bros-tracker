@@ -1523,8 +1523,14 @@ function calcGymStreak(username, upToDate) {
   }
 
   if (lastFailIdx === -1) {
-    // No failure in new era — carry legacy forward
-    const totalStreak = legacyBase + newDates.length;
+    // No failure in new era — carry legacy forward.
+    // Grace period (<7 new dates): rolling window can't fire yet, so only count
+    // actual gym days (a no-gym day doesn't add to the count).
+    // Once 7+ new dates exist the rolling window has already validated them.
+    const newCount = newDates.length < 7
+      ? newDates.filter(d => log[d] && log[d].gym).length
+      : newDates.length;
+    const totalStreak = legacyBase + newCount;
     const allDates = getDateRange(START_DATE, upToDate);
     const startIdx = Math.max(0, allDates.length - totalStreak);
     return { streak: totalStreak, streakStartDate: allDates[startIdx] || upToDate };
