@@ -3246,16 +3246,16 @@ const PR_DEFAULTS = [
 
 function getPRBook() {
   if (!appData._prBook) appData._prBook = {};
-  PR_DEFAULTS.forEach(e => {
-    if (!appData._prBook[e.name]) appData._prBook[e.name] = { unit: e.unit, bodyPart: e.bodyPart, logs: [] };
-    if (!appData._prBook[e.name].bodyPart) appData._prBook[e.name].bodyPart = e.bodyPart;
-  });
-  // Key renames
-  if (appData._prBook['Bicep Curl'] && !appData._prBook['Preacher Curl (Rod)']) {
+  // Key renames — must run before PR_DEFAULTS seeds new entries
+  if (appData._prBook['Bicep Curl']) {
     appData._prBook['Preacher Curl (Rod)'] = appData._prBook['Bicep Curl'];
     delete appData._prBook['Bicep Curl'];
     saveData();
   }
+  PR_DEFAULTS.forEach(e => {
+    if (!appData._prBook[e.name]) appData._prBook[e.name] = { unit: e.unit, bodyPart: e.bodyPart, logs: [] };
+    if (!appData._prBook[e.name].bodyPart) appData._prBook[e.name].bodyPart = e.bodyPart;
+  });
   const migrate = { core: 'core_cardio', cardio: 'core_cardio', fullbody: 'others' };
   Object.keys(appData._prBook).forEach(k => {
     if (!Array.isArray(appData._prBook[k].logs)) appData._prBook[k].logs = [];
