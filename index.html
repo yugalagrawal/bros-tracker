@@ -1677,10 +1677,10 @@ function generateTrashTalk() {
   const today = todayStr();
   const seed = today.split('-').reduce((a, b) => a * 31 + parseInt(b), 0);
   const pick = (arr) => arr[Math.abs(seed + arr.length * 17) % arr.length];
+  const nth = (n) => n + (n===1?'st':n===2?'nd':n===3?'rd':'th');
 
   const yesterday = yesterdayStr();
 
-  // Build full per-user stats
   const stats = USERS.map(u => {
     const log = getUserLog(u.username);
     const allDates = getDateRange(START_DATE, yesterday);
@@ -1688,106 +1688,131 @@ function generateTrashTalk() {
     const last7 = last7dates.map(d => log[d]).filter(Boolean);
     const loggedAll = allDates.filter(d => log[d]);
 
-    const gymDays7     = last7.filter(e => e.gym).length;
-    const smokeDays7   = last7.filter(e => (e.badHabits||[]).includes('Smoke')).length;
-    const drinkDays7   = last7.filter(e => (e.badHabits||[]).includes('Drink')).length;
-    const junkDays7    = last7.filter(e => (e.badHabits||[]).includes('Junk Diet')).length;
-    const proteinHigh7 = last7.filter(e => proteinPts(e.protein) >= 3).length;
-    const proteinLow7  = last7.filter(e => proteinPts(e.protein) < 0).length;
-    const goodDays7    = last7.filter(e => { const r = calcDayScore(e, u.username, yesterday); return r && r.cleanSheet; }).length;
-    const { streak }   = calcGymStreak(u.username, yesterday);
+    const gymDays7      = last7.filter(e => e.gym).length;
+    const actDays7      = last7.filter(e => e.activity && e.activity !== 'None' && e.activity !== 'No').length;
+    const smokeDays7    = last7.filter(e => (e.badHabits||[]).includes('Smoke')).length;
+    const drinkDays7    = last7.filter(e => (e.badHabits||[]).includes('Drink')).length;
+    const junkDays7     = last7.filter(e => (e.badHabits||[]).includes('Junk Diet')).length;
+    const anyBad7       = last7.filter(e => (e.badHabits||[]).length > 0).length;
+    const proteinHigh7  = last7.filter(e => proteinPts(e.protein) >= 3).length;
+    const proteinLow7   = last7.filter(e => proteinPts(e.protein) < 0).length;
+    const proteinZero7  = last7.filter(e => proteinPts(e.protein) === 0).length;
+    const goodDays7     = last7.filter(e => { const r = calcDayScore(e, u.username, yesterday); return r && r.cleanSheet; }).length;
+    const { streak }    = calcGymStreak(u.username, yesterday);
 
-    // All-time counts
-    const smokeTotal  = loggedAll.filter(d => (log[d].badHabits||[]).includes('Smoke')).length;
-    const drinkTotal  = loggedAll.filter(d => (log[d].badHabits||[]).includes('Drink')).length;
-    const junkTotal   = loggedAll.filter(d => (log[d].badHabits||[]).includes('Junk Diet')).length;
-    const gymTotal    = loggedAll.filter(d => log[d].gym).length;
+    const smokeTotal = loggedAll.filter(d => (log[d].badHabits||[]).includes('Smoke')).length;
+    const drinkTotal = loggedAll.filter(d => (log[d].badHabits||[]).includes('Drink')).length;
+    const junkTotal  = loggedAll.filter(d => (log[d].badHabits||[]).includes('Junk Diet')).length;
+    const gymTotal   = loggedAll.filter(d => log[d].gym).length;
 
     return {
       ...u,
       total: getTotalScore(u.username),
-      streak, gymDays7, smokeDays7, drinkDays7, junkDays7,
-      proteinHigh7, proteinLow7, goodDays7,
+      streak, gymDays7, actDays7, smokeDays7, drinkDays7, junkDays7, anyBad7,
+      proteinHigh7, proteinLow7, proteinZero7, goodDays7,
       smokeTotal, drinkTotal, junkTotal, gymTotal,
     };
-  }).sort((a, b) => b.total - a.total);
+  });
 
-  const leader = stats[0];
-  const second = stats[1];
-  const last   = stats[stats.length - 1];
+  // Sorted views
+  const byScore   = [...stats].sort((a, b) => b.total - a.total);
+  const byGym7    = [...stats].sort((a, b) => b.gymDays7 - a.gymDays7);
+  const bySmoke7  = [...stats].sort((a, b) => b.smokeDays7 - a.smokeDays7);
+  const byDrink7  = [...stats].sort((a, b) => b.drinkDays7 - a.drinkDays7);
+  const byJunk7   = [...stats].sort((a, b) => b.junkDays7 - a.junkDays7);
+  const byProtH7  = [...stats].sort((a, b) => b.proteinHigh7 - a.proteinHigh7);
+  const byProtL7  = [...stats].sort((a, b) => b.proteinLow7 - a.proteinLow7);
+  const byGood7   = [...stats].sort((a, b) => b.goodDays7 - a.goodDays7);
+  const byAct7    = [...stats].sort((a, b) => b.actDays7 - a.actDays7);
+  const byStreak  = [...stats].sort((a, b) => b.streak - a.streak);
 
-  // Per-category offenders (across ALL users, not just score loser)
-  const worstGym    = [...stats].sort((a, b) => a.gymDays7 - b.gymDays7)[0];
-  const worstSmoke  = [...stats].sort((a, b) => b.smokeDays7 - a.smokeDays7)[0];
-  const worstDrink  = [...stats].sort((a, b) => b.drinkDays7 - a.drinkDays7)[0];
-  const worstJunk   = [...stats].sort((a, b) => b.junkDays7 - a.junkDays7)[0];
-  const worstProtein= [...stats].sort((a, b) => b.proteinLow7 - a.proteinLow7)[0];
-  const bestGym     = [...stats].sort((a, b) => b.gymDays7 - a.gymDays7)[0];
-  const bestGoodDay = [...stats].sort((a, b) => b.goodDays7 - a.goodDays7)[0];
-
+  const [D, V, Y] = ['Dushyant', 'Vikas', 'Yugal'].map(name => stats.find(s => s.username === name));
   const lines = [];
 
-  // ── Cross-category observations (gym consistent but bad habits) ──
-  stats.forEach(u => {
-    if (u.gymDays7 >= 5 && u.smokeDays7 >= 2)
-      lines.push(`${u.username} went to gym ${u.gymDays7} days but smoked ${u.smokeDays7} times. Bro you're literally burning your gains. 🚬🏋️`);
-    if (u.gymDays7 >= 5 && u.drinkDays7 >= 2)
-      lines.push(`${u.username}: ${u.gymDays7} gym days, ${u.drinkDays7} drink nights. The gym giveth, the bar taketh away. 🍺`);
-    if (u.gymDays7 >= 5 && u.junkDays7 >= 3)
-      lines.push(`${u.username} is grinding at the gym but eating like it's a cheat month. ${u.junkDays7} junk days. 🍔`);
-    if (u.gymDays7 >= 5 && u.proteinLow7 >= 3)
-      lines.push(`${u.username} showed up to gym ${u.gymDays7} days but hit protein under 50g ${u.proteinLow7} times. That's just cardio with extra steps. 🤷`);
-  });
+  // Helper: describe rank in a category
+  const rank3 = (sorted, label, hi, lo) =>
+    `${sorted[0].username} ${hi}, ${sorted[1].username} is mediocre, and ${sorted[2].username} ${lo}`;
 
-  // ── Gym roast — only if actually bad ──
-  if (worstGym.gymDays7 === 0)
-    lines.push(`${worstGym.username} has a gym membership and zero gym sessions this week. Peak investment strategy. 💸`);
-  else if (worstGym.gymDays7 <= 2)
-    lines.push(`${worstGym.username} made it to the gym ${worstGym.gymDays7} time(s) this week. The gym filed a missing person report. 🚨`);
+  // ── GYM comparison ──
+  lines.push(`Gym scorecard this week — ${byGym7[0].username}: ${byGym7[0].gymDays7}/7, ${byGym7[1].username}: ${byGym7[1].gymDays7}/7, ${byGym7[2].username}: ${byGym7[2].gymDays7}/7. One of you is a machine, one is trying, one is basically a gym membership's therapist. 🏋️`);
 
-  // ── Gym praise ──
-  if (bestGym.gymDays7 >= 6)
-    lines.push(`${bestGym.gymDays7}/7 gym days for ${bestGym.username} this week. Someone check if he's human or just a protein shake with legs. 🦾`);
-  if (leader.streak >= 10)
-    lines.push(`${leader.username} is on a ${leader.streak}-day gym streak. At this point just move into the gym bro. 🏠🏋️`);
+  if (byGym7[0].gymDays7 - byGym7[2].gymDays7 >= 3)
+    lines.push(`${byGym7[0].username} hit gym ${byGym7[0].gymDays7} days, ${byGym7[1].username} managed ${byGym7[1].gymDays7}, and ${byGym7[2].username} showed up ${byGym7[2].gymDays7} times. The gap between first and last isn't a gap — it's a philosophical statement. 🧘`);
 
-  // ── Smoke roast — always targeted at actual smoker ──
-  if (worstSmoke.smokeDays7 >= 3)
-    lines.push(`${worstSmoke.username} logged smoking ${worstSmoke.smokeDays7} times this week. The gym air compressor works better than your lungs rn. 🫁`);
-  else if (worstSmoke.smokeDays7 >= 1)
-    lines.push(`${worstSmoke.username} had ${worstSmoke.smokeDays7} smoke day(s) this week. One day those gains are going to file a complaint. 🚬`);
+  if (byGym7[2].gymDays7 === 0)
+    lines.push(`${byGym7[0].username} and ${byGym7[1].username} actually went to the gym this week. ${byGym7[2].username} had a full spiritual experience watching them from the couch. 🛋️`);
 
-  // ── Drink roast — targeted ──
-  if (worstDrink.drinkDays7 >= 4)
-    lines.push(`${worstDrink.username} is basically sponsored by alcohol. ${worstDrink.drinkDays7} drinks in 7 days. 🥴`);
-  else if (worstDrink.drinkDays7 >= 2)
-    lines.push(`${worstDrink.username}'s weekly report: ${worstDrink.drinkDays7} drinks, ${worstDrink.gymDays7} gym days. One of these needs to go up. 🤦`);
+  // ── PROTEIN comparison ──
+  lines.push(`Protein week in review: ${byProtH7[0].username} hit 75g+ on ${byProtH7[0].proteinHigh7} days, ${byProtH7[1].username} on ${byProtH7[1].proteinHigh7}, ${byProtH7[2].username} on ${byProtH7[2].proteinHigh7}. The chicken breast industry has a clear favourite. 🍗`);
 
-  // ── Junk roast — targeted ──
-  if (worstJunk.junkDays7 >= 3)
-    lines.push(`${worstJunk.username}: ${worstJunk.junkDays7} junk food days this week. Even McDonald's is concerned. 🍔`);
+  if (byProtL7[0].proteinLow7 >= 2)
+    lines.push(`Protein under 50g alert: ${byProtL7[0].username} failed ${byProtL7[0].proteinLow7} days, ${byProtL7[1].username} failed ${byProtL7[1].proteinLow7}, ${byProtL7[2].username} failed ${byProtL7[2].proteinLow7}. ${byProtL7[0].username} is basically building muscle out of vibes and sadness. 😭`);
 
-  // ── Protein ──
-  if (worstProtein.proteinLow7 >= 3)
-    lines.push(`${worstProtein.username} was under 50g protein ${worstProtein.proteinLow7} days this week. The gains fairy has officially given up. 🧚`);
-  stats.forEach(u => {
-    if (u.proteinHigh7 === 7)
-      lines.push(`${u.username} hit 75g+ protein 7 days straight. Someone's been having relationship problems with a chicken breast. 🍗`);
-  });
+  if (D && V && Y)
+    lines.push(`Protein discipline ranking: ${byProtH7[0].username} leads with ${byProtH7[0].proteinHigh7} high-protein days. ${byProtH7[1].username} is the understudy. ${byProtH7[2].username} is apparently on a different challenge — carb loading for a race no one signed up for. 🍞`);
 
-  // ── Good day praise ──
-  if (bestGoodDay.goodDays7 >= 5)
-    lines.push(`${bestGoodDay.goodDays7} Good Days in a week for ${bestGoodDay.username}. The man is basically a walking supplement ad. 💊`);
+  // ── BAD HABITS comparison ──
+  const totalBad = s => s.smokeDays7 + s.drinkDays7 + s.junkDays7;
+  const byBad = [...stats].sort((a, b) => totalBad(b) - totalBad(a));
+  if (totalBad(byBad[0]) > 0) {
+    lines.push(`Bad habits leaderboard (lower is better) — ${byBad[0].username}: ${totalBad(byBad[0])} sins, ${byBad[1].username}: ${totalBad(byBad[1])}, ${byBad[2].username}: ${totalBad(byBad[2])}. ${byBad[2].username} is either a saint or just not logging honestly. 😇`);
+  }
 
-  // ── Score gap — only if meaningful ──
-  const gap = leader.total - last.total;
-  if (gap > 150) lines.push(`${leader.username} leads ${last.username} by ${gap} pts. That's not a competition, that's a documentary. 🎬`);
-  else if (gap > 60) lines.push(`${leader.username} vs ${last.username}: ${leader.total} vs ${last.total} pts. One is grinding, the other is just… existing. 🌿`);
+  if (bySmoke7[0].smokeDays7 >= 1)
+    lines.push(`Smoke report: ${bySmoke7[0].username} — ${bySmoke7[0].smokeDays7} days, ${bySmoke7[1].username} — ${bySmoke7[1].smokeDays7}, ${bySmoke7[2].username} — ${bySmoke7[2].smokeDays7}. ${bySmoke7[0].username}'s lungs have filed an official complaint while ${bySmoke7[2].username} breathes clean air and judges silently. 🫁`);
 
-  // ── Fallback: something always fires ──
-  lines.push(`${second.username} is sitting comfortably in second. Most dangerous position — too close to quit, too far to panic. ⚠️`);
-  lines.push(`${leader.username} is leading with ${leader.total} pts. ${last.username} is… also participating. 🏆`);
-  lines.push(`Week ${Math.ceil(getDateRange(START_DATE, yesterday).length / 7)} update: ${leader.username} still grinding, ${last.username} still finding excuses. 📅`);
+  if (byDrink7[0].drinkDays7 >= 1)
+    lines.push(`Drink tracker: ${byDrink7[0].username} had ${byDrink7[0].drinkDays7} drink sessions, ${byDrink7[1].username} had ${byDrink7[1].drinkDays7}, ${byDrink7[2].username} had ${byDrink7[2].drinkDays7}. ${byDrink7[0].username}'s liver is writing its memoir. 📖🍺`);
+
+  if (byJunk7[0].junkDays7 >= 2)
+    lines.push(`Junk food diary: ${byJunk7[0].username} ${byJunk7[0].junkDays7} days, ${byJunk7[1].username} ${byJunk7[1].junkDays7} days, ${byJunk7[2].username} ${byJunk7[2].junkDays7} days. ${byJunk7[0].username} is carb loading for a marathon that exists only in their imagination. 🍔`);
+
+  // ── ACTIVITY comparison ──
+  lines.push(`Activity this week: ${byAct7[0].username} moved ${byAct7[0].actDays7} days, ${byAct7[1].username} moved ${byAct7[1].actDays7}, ${byAct7[2].username} moved ${byAct7[2].actDays7}. ${byAct7[2].username}'s step count is basically a screenshot of their bedroom floor. 📸`);
+
+  if (byAct7[0].actDays7 >= 5 && byAct7[2].actDays7 <= 1)
+    lines.push(`${byAct7[0].username} was active ${byAct7[0].actDays7} days this week. ${byAct7[1].username} tried occasionally. ${byAct7[2].username} moved ${byAct7[2].actDays7} day(s) — the couch sent a thank-you card. 🛋️`);
+
+  // ── GOOD DAYS comparison ──
+  lines.push(`Good Days this week: ${byGood7[0].username} nailed ${byGood7[0].goodDays7}, ${byGood7[1].username} got ${byGood7[1].goodDays7}, ${byGood7[2].username} achieved ${byGood7[2].goodDays7}. ${byGood7[0].goodDays7 > 0 ? byGood7[0].username + ' is what a functional adult looks like apparently.' : 'None of you had a single perfect day. Group therapy is on Sunday.'} ⭐`);
+
+  // ── STREAK comparison ──
+  if (byStreak[0].streak >= 5)
+    lines.push(`Gym streak standings: ${byStreak[0].username} is on a ${byStreak[0].streak}-day run, ${byStreak[1].username} has ${byStreak[1].streak}, ${byStreak[2].username} has ${byStreak[2].streak}. ${byStreak[0].username} is basically a gym appliance at this point. ${byStreak[2].streak === 0 ? byStreak[2].username + ' is doing a streak of zero, which is technically also a streak.' : ''} 🔥`);
+
+  // ── SCORE vs HABITS cross-comparison ──
+  if (D && V && Y) {
+    const cleanest = [...stats].sort((a, b) => totalBad(a) - totalBad(b))[0];
+    const dirtiest = [...stats].sort((a, b) => totalBad(b) - totalBad(a))[0];
+    if (totalBad(dirtiest) > totalBad(cleanest))
+      lines.push(`${cleanest.username} has ${totalBad(cleanest)} bad habit days, ${stats.find(s=>s!==cleanest&&s!==dirtiest).username} has ${totalBad(stats.find(s=>s!==cleanest&&s!==dirtiest))}, ${dirtiest.username} has ${totalBad(dirtiest)}. ${dirtiest.username} is stress testing their body. ${cleanest.username} is stress testing everyone else's patience with their discipline. 😤`);
+
+    lines.push(`Weekly diagnosis — ${byScore[0].username}: grinding (${byScore[0].total} pts), ${byScore[1].username}: surviving (${byScore[1].total} pts), ${byScore[2].username}: participating (${byScore[2].total} pts). The gap in effort tells a story. The story is a tragedy. 📉`);
+
+    lines.push(`${D.username} gym: ${D.gymDays7}, protein: ${D.proteinHigh7}/7 days good, bad habits: ${totalBad(D)}. ${V.username} gym: ${V.gymDays7}, protein: ${V.proteinHigh7}/7, bad: ${totalBad(V)}. ${Y.username} gym: ${Y.gymDays7}, protein: ${Y.proteinHigh7}/7, bad: ${totalBad(Y)}. Stats don't lie, but they do roast. 📊`);
+
+    // Gym but bad habits
+    if (byGym7[0].gymDays7 >= 5 && totalBad(byGym7[0]) >= 3)
+      lines.push(`${byGym7[0].username} went to gym ${byGym7[0].gymDays7} days but racked up ${totalBad(byGym7[0])} bad habit days. ${byGym7[1].username} and ${byGym7[2].username} are watching this Sisyphus situation with genuine concern. 🪨`);
+
+    // All zero good days
+    if (stats.every(s => s.goodDays7 === 0))
+      lines.push(`Dushyant, Vikas, and Yugal combined for zero Good Days this week. Somewhere a nutritionist is crying. The gym equipment is also crying. Everyone is crying. 😢`);
+
+    // Someone perfect
+    if (stats.some(s => s.goodDays7 >= 5)) {
+      const saint = stats.find(s => s.goodDays7 >= 5);
+      const others = stats.filter(s => s !== saint);
+      lines.push(`${saint.username} had ${saint.goodDays7} Good Days this week while ${others[0].username} and ${others[1].username} watched from the moral basement. ${saint.username} is either very disciplined or very boring. Possibly both. 😇`);
+    }
+  }
+
+  // ── Always-fire fallbacks mentioning all three ──
+  lines.push(`Dushyant, Vikas, and Yugal walk into a gym. ${byGym7[0].username} actually works out. ${byGym7[1].username} does half a set. ${byGym7[2].username} updates their Instagram bio to "fitness enthusiast." 📱`);
+  lines.push(`If this challenge were a group project — ${byScore[0].username} is doing the work, ${byScore[1].username} is in the group chat, ${byScore[2].username} joined late and is asking what the topic is. 📚`);
+  lines.push(`${byScore[0].username} leads with ${byScore[0].total} pts, ${byScore[1].username} has ${byScore[1].total}, ${byScore[2].username} has ${byScore[2].total}. In a parallel universe where effort and results are correlated, this makes complete sense. 🌌`);
+  lines.push(`Three men, one challenge. ${byGym7[0].username} shows up to the gym. ${byGym7[1].username} shows up sometimes. ${byGym7[2].username} shows up to eat. The protein data confirms this. 🍗`);
+  lines.push(`Dushyant, Vikas, Yugal — combined gym days this week: ${D.gymDays7 + V.gymDays7 + Y.gymDays7}. Combined bad habit days: ${totalBad(D) + totalBad(V) + totalBad(Y)}. The math is not mathing in anyone's favour. 🧮`);
 
   return pick(lines.filter(Boolean));
 }
