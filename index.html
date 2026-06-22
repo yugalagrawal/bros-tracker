@@ -1515,6 +1515,27 @@ function gymStreakOnDay(username, dateStr) {
 // Good Day = Gym + Protein 75g+ + No Bad Habits.
 // Rest days (no gym logged) are neutral — don't extend or break the streak.
 function goodDayStreakOnDay(username, dateStr) {
+  if (dateStr >= '2026-06-22') {
+    // New rules: tied to gym streak — if gym streak is 0, good day streak is 0.
+    // Rest days are neutral only within the active gym streak window.
+    const { streak: gymStreak, streakStartDate } = calcGymStreak(username, dateStr);
+    if (gymStreak === 0) return 0;
+    const log = getUserLog(username);
+    const dates = getDateRange(streakStartDate, dateStr);
+    let streak = 0;
+    for (let i = dates.length - 1; i >= 0; i--) {
+      const d = dates[i];
+      const e = log[d];
+      if (!e || !e.gym) continue; // rest day = neutral within gym streak window
+      const isGood = e.activity &&
+        (e.activity !== 'Other' || getApprovalStatus(username, d) === 'approved') &&
+        proteinGoodDay(e.protein) && (e.badHabits || []).length === 0;
+      if (isGood) streak++;
+      else break;
+    }
+    return streak;
+  }
+  // Legacy: Gym + Activity + Protein + No bad habits; rest days neutral
   const log = getUserLog(username);
   const dates = getDateRange(START_DATE, dateStr);
   const oldProteinGoodDay = v => v === true || (typeof v === 'number' && v >= 2);
@@ -1522,18 +1543,11 @@ function goodDayStreakOnDay(username, dateStr) {
   for (let i = dates.length - 1; i >= 0; i--) {
     const d = dates[i];
     const e = log[d];
-    if (!e) continue; // unlogged day = neutral, skip
-    if (!e.gym) continue; // rest day = neutral, skip
-    let isGood;
-    if (d < '2026-06-22') {
-      // Legacy: Gym + Activity + Protein + No bad habits
-      isGood = e.activity &&
-        (e.activity !== 'Other' || getApprovalStatus(username, d) === 'approved') &&
-        oldProteinGoodDay(e.protein) && (e.badHabits || []).length === 0;
-    } else {
-      // New: Gym + Protein 75g+ + No bad habits
-      isGood = proteinGoodDay(e.protein) && (e.badHabits || []).length === 0;
-    }
+    if (!e) continue;
+    if (!e.gym) continue;
+    const isGood = e.activity &&
+      (e.activity !== 'Other' || getApprovalStatus(username, d) === 'approved') &&
+      oldProteinGoodDay(e.protein) && (e.badHabits || []).length === 0;
     if (isGood) streak++;
     else break;
   }
