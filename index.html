@@ -3512,47 +3512,6 @@ function renderPRBook() {
         }).join('')}
       </div>`;
 
-  // PR leaderboard — only exercises where all 3 have logged a PR
-  const allExercises = prExerciseList();
-  const contested = allExercises.filter(name =>
-    USERS.every(u => getUserBestPR(name, u.username) !== null)
-  );
-  const wins = {};
-  USERS.forEach(u => wins[u.username] = 0);
-  contested.forEach(name => {
-    const ex = book[name];
-    const timeBased = ex.unit === 'min' || ex.unit === 'sec';
-    let best = null, bestUser = null;
-    USERS.forEach(u => {
-      const pr = getUserBestPR(name, u.username);
-      if (!pr) return;
-      const better = !best || (timeBased ? pr.value < best.value : pr.value > best.value);
-      if (better) { best = pr; bestUser = u.username; }
-    });
-    if (bestUser) wins[bestUser]++;
-  });
-  const ranked = USERS.map(u => ({ ...u, wins: wins[u.username] }))
-    .sort((a, b) => b.wins - a.wins);
-  const medals = ['🥇', '🥈', '🥉'];
-  const podiumHTML = contested.length === 0
-    ? `<div style="text-align:center;padding:14px;font-size:12px;color:var(--muted);">Leaderboard unlocks once all 3 bros log a PR for the same exercise</div>`
-    : `<div style="display:flex;gap:8px;">
-        ${ranked.map((u, i) => `
-          <div style="flex:1;background:${u.color}18;border-radius:14px;padding:12px 8px;text-align:center;border:2px solid ${i===0?u.color+'55':'transparent'};">
-            <div style="font-size:20px;margin-bottom:4px;">${medals[i] || ''}</div>
-            <div style="width:36px;height:36px;border-radius:50%;background:${u.color};display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#fff;margin:0 auto 6px;">${getInitial(u.username)}</div>
-            <div style="font-size:12px;font-weight:700;color:var(--text);">${u.username}</div>
-            <div style="font-size:20px;font-weight:900;color:${u.color};line-height:1.2;">${u.wins}</div>
-            <div style="font-size:10px;color:var(--muted);">PR${u.wins !== 1 ? 's' : ''} won</div>
-          </div>`).join('')}
-      </div>
-      <div style="font-size:10px;color:var(--muted);margin-top:6px;text-align:center;">Based on ${contested.length} exercise${contested.length!==1?'s':''} where all 3 bros have logged a PR</div>`;
-
-  const leaderboardHTML = `
-    <div style="background:var(--surface);border-radius:16px;padding:14px;margin-bottom:14px;">
-      <div style="font-size:12px;font-weight:800;color:var(--muted);letter-spacing:0.5px;margin-bottom:10px;">🏆 PR LEADERBOARD</div>
-      ${podiumHTML}
-    </div>`;
 
   el.innerHTML = `
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
@@ -3566,7 +3525,6 @@ function renderPRBook() {
         ${prState.showAdd ? '✕ Cancel' : '➕ Add'}
       </button>
     </div>
-    ${leaderboardHTML}
     ${addFormHTML}
     <div style="position:relative;margin-bottom:12px;">
       <input type="text" placeholder="🔍  Search exercises..." value="${prState.search}"
