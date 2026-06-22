@@ -2090,7 +2090,7 @@ function renderLeaderboard() {
     const { streak, streakStartDate } = calcGymStreak(u.username, yesterdayStr());
     const log = getUserLog(u.username);
     const streakDates = getDateRange(streakStartDate, yesterdayStr()).slice(-7);
-    const last7 = streakDates.map(d => !!(log[d] && log[d].gym));
+    const last7 = streakDates.map(d => log[d] ? (log[d].gym ? 'gym' : 'miss') : 'empty');
     return { ...u, total: getTotalScore(u.username), streak, logged: getLoggedDays(u.username), last7 };
   }).sort((a, b) => b.total - a.total);
 
@@ -2115,9 +2115,11 @@ function renderLeaderboard() {
           ${u.streak >= 5 ? `&nbsp;<span class="streak-badge">🔥 ${u.streak}-day streak</span>` : u.streak > 0 ? `&nbsp;<span style="font-size:11px;color:var(--muted)">🔥 ${u.streak} days</span>` : ''}
         </div>
         <div style="display:flex;gap:3px;margin-top:4px;">
-          ${u.last7.map(hit => hit
+          ${u.last7.map(s => s === 'gym'
             ? `<span style="font-size:11px;background:rgba(0,229,160,0.15);color:#00c48c;border:1px solid rgba(0,229,160,0.3);border-radius:3px;width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center;font-weight:700;">✓</span>`
-            : `<span style="font-size:11px;background:rgba(248,81,73,0.1);color:var(--danger);border:1px solid rgba(248,81,73,0.25);border-radius:3px;width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center;font-weight:700;">✗</span>`
+            : s === 'miss'
+            ? `<span style="font-size:11px;background:rgba(248,81,73,0.1);color:var(--danger);border:1px solid rgba(248,81,73,0.25);border-radius:3px;width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center;font-weight:700;">✗</span>`
+            : `<span style="border-radius:3px;width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center;background:var(--border);opacity:0.4;"></span>`
           ).join('')}
         </div>
       </div>
