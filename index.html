@@ -3474,9 +3474,7 @@ function renderPRBook() {
                     ${timeBased ? ' · lower is better' : ''}
                   </div>
                   <input id="prValueInput" type="number" step="0.1" min="0" placeholder="${ex.unit}" inputmode="decimal"
-                    style="width:100%;box-sizing:border-box;background:var(--surface);border:1.5px solid ${bp.color};border-radius:8px;padding:8px 10px;color:var(--text);font-size:16px;font-weight:800;outline:none;margin-bottom:6px;" />
-                  <input id="prNoteInput" type="text" placeholder="Note (optional)"
-                    style="width:100%;box-sizing:border-box;background:var(--surface);border:1.5px solid var(--border);border-radius:8px;padding:8px 10px;color:var(--text);font-size:13px;outline:none;margin-bottom:8px;" />
+                    style="width:100%;box-sizing:border-box;background:var(--surface);border:1.5px solid ${bp.color};border-radius:8px;padding:8px 10px;color:var(--text);font-size:16px;font-weight:800;outline:none;margin-bottom:8px;" />
                   <div style="display:flex;gap:6px;">
                     <button onclick="submitPR('${name}')"
                       style="flex:1;background:${bp.color};border:none;border-radius:8px;padding:9px;font-weight:700;color:#fff;cursor:pointer;font-size:13px;">🏆 Save PR</button>
