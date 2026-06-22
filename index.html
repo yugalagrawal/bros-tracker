@@ -3584,7 +3584,7 @@ function submitPR(exercise) {
   const note   = document.getElementById('prNoteInput')?.value?.trim() || '';
   if (!valRaw) { showToast('Enter a value', 'error'); return; }
   const value = parseFloat(valRaw);
-  if (isNaN(value) || value <= 0) { showToast('Invalid value', 'error'); return; }
+  if (isNaN(value) || value < 0) { showToast('Invalid value', 'error'); return; }
 
   const ex = getPRBook()[exercise];
   const timeBased = ex.unit === 'min' || ex.unit === 'sec';
