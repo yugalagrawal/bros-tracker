@@ -3260,24 +3260,10 @@ function renderPRBook() {
         <div style="position:relative;">
           <input id="prNewName" type="text" placeholder="Exercise name (e.g. Bicep Curl)"
             value="${prState.newName}"
-            oninput="prState.newName=this.value;renderPRBook();document.getElementById('prNewName').focus();"
+            oninput="prState.newName=this.value;prUpdateSuggestions();"
             autocomplete="off"
             style="background:var(--bg);border:1.5px solid var(--border);border-radius:10px;padding:10px 14px;color:var(--text);font-size:14px;outline:none;width:100%;box-sizing:border-box;" />
-          ${(() => {
-            if (!prState.newName.trim()) return '';
-            const q = prState.newName.trim().toLowerCase();
-            const matches = prExerciseList().filter(n => n.toLowerCase().includes(q));
-            if (!matches.length) return '';
-            return `<div style="position:absolute;top:100%;left:0;right:0;background:var(--surface);border:1.5px solid var(--border);border-radius:10px;margin-top:4px;overflow:hidden;z-index:10;box-shadow:0 4px 16px #0001;">
-              ${matches.map(n => {
-                const isDupe = n.toLowerCase() === q;
-                return `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--border);background:${isDupe ? '#fef2f2' : 'var(--surface)'};">
-                  <span style="font-size:13px;font-weight:600;color:${isDupe ? '#ef4444' : 'var(--text)'};">${n}</span>
-                  ${isDupe ? `<span style="font-size:11px;font-weight:700;color:#ef4444;background:#fecaca;padding:2px 8px;border-radius:20px;">Already exists</span>` : ''}
-                </div>`;
-              }).join('')}
-            </div>`;
-          })()}
+          <div id="prSuggestions"></div>
         </div>
         <div style="font-size:12px;font-weight:700;color:var(--muted);margin-bottom:2px;">Measured by</div>
         <div style="display:flex;gap:8px;">
@@ -3535,6 +3521,24 @@ function submitNewExercise() {
   prState.newName = '';
   renderPRBook();
   showToast(`"${name}" added! 💪`, 'success');
+}
+
+function prUpdateSuggestions() {
+  const el = document.getElementById('prSuggestions');
+  if (!el) return;
+  const q = (document.getElementById('prNewName')?.value || '').trim().toLowerCase();
+  if (!q) { el.innerHTML = ''; return; }
+  const matches = prExerciseList().filter(n => n.toLowerCase().includes(q));
+  if (!matches.length) { el.innerHTML = ''; return; }
+  el.innerHTML = `<div style="background:var(--surface);border:1.5px solid var(--border);border-radius:10px;margin-top:4px;overflow:hidden;box-shadow:0 4px 16px #0001;">
+    ${matches.map(n => {
+      const isDupe = n.toLowerCase() === q;
+      return `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--border);background:${isDupe ? '#fef2f2' : 'var(--surface)'};">
+        <span style="font-size:13px;font-weight:600;color:${isDupe ? '#ef4444' : 'var(--text)'};">${n}</span>
+        ${isDupe ? `<span style="font-size:11px;font-weight:700;color:#ef4444;background:#fecaca;padding:2px 8px;border-radius:20px;">Already exists</span>` : ''}
+      </div>`;
+    }).join('')}
+  </div>`;
 }
 
 // ── TOAST ──
