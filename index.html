@@ -3237,7 +3237,7 @@ const PR_DEFAULTS = [
   { name: 'Shoulder Press',         unit: 'kg',   bodyPart: 'shoulders'   },
   { name: 'Lateral Raise',          unit: 'kg',   bodyPart: 'shoulders'   },
   // Arms
-  { name: 'Bicep Curl',             unit: 'kg',   bodyPart: 'arms'        },
+  { name: 'Preacher Curl (Rod)',     unit: 'kg',   bodyPart: 'arms'        },
   { name: 'Tricep Rope Pushdown',   unit: 'kg',   bodyPart: 'arms'        },
   // Core & Cardio
   { name: 'Plank',                  unit: 'sec',  bodyPart: 'core_cardio' },
@@ -3250,6 +3250,12 @@ function getPRBook() {
     if (!appData._prBook[e.name]) appData._prBook[e.name] = { unit: e.unit, bodyPart: e.bodyPart, logs: [] };
     if (!appData._prBook[e.name].bodyPart) appData._prBook[e.name].bodyPart = e.bodyPart;
   });
+  // Key renames
+  if (appData._prBook['Bicep Curl'] && !appData._prBook['Preacher Curl (Rod)']) {
+    appData._prBook['Preacher Curl (Rod)'] = appData._prBook['Bicep Curl'];
+    delete appData._prBook['Bicep Curl'];
+    saveData();
+  }
   const migrate = { core: 'core_cardio', cardio: 'core_cardio', fullbody: 'others' };
   Object.keys(appData._prBook).forEach(k => {
     if (!Array.isArray(appData._prBook[k].logs)) appData._prBook[k].logs = [];
