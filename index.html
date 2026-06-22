@@ -1533,13 +1533,57 @@ function goodDayStreakOnDay(username, dateStr) {
 
 function calcDayScore(entry, username, dateStr) {
   if (!entry) return null;
+  if (dateStr < '2026-06-22') return _calcDayScoreLegacy(entry, username, dateStr);
+  return _calcDayScoreNew(entry, username, dateStr);
+}
+
+// ── Pre-Jun 22 scoring (exact 71576d5 logic) ──
+function _calcDayScoreLegacy(entry, username, dateStr) {
   let pos = 0, neg = 0, notes = [];
 
   if (entry.gym) { pos += 10; notes.push({ label: 'Gym', pts: 10 }); }
 
-  if (entry.activity === 'Yes') {
-    pos += 5; notes.push({ label: 'Activity', pts: 5 });
+  if (entry.activity) {
+    if (entry.activity === 'Other') {
+      const status = getApprovalStatus(username, dateStr);
+      if (status === 'approved') { pos += 3; notes.push({ label: entry.activityOther || 'Other', pts: 3 }); }
+    } else {
+      pos += 3; notes.push({ label: entry.activity, pts: 3 });
+    }
   }
+
+  // Legacy protein: true→+2, false/null→0, numeric passthrough (no negatives)
+  const pPts = (() => { const v = entry.protein; if (v === true) return 2; if (!v) return 0; return typeof v === 'number' ? v : 0; })();
+  if (pPts > 0) { pos += pPts; notes.push({ label: proteinLabel(entry.protein), pts: pPts }); }
+
+  (entry.badHabits || []).forEach(b => {
+    const pts = BAD_PTS[b] || -10; neg += Math.abs(pts); notes.push({ label: b, pts });
+  });
+
+  const activityCounts = entry.activity && (entry.activity !== 'Other' || getApprovalStatus(username, dateStr) === 'approved');
+  const legacyProteinGood = v => v === true || (typeof v === 'number' && v >= 2);
+  let cleanSheet = entry.gym && activityCounts && legacyProteinGood(entry.protein) && (entry.badHabits || []).length === 0;
+  if (cleanSheet) { pos += 4; notes.push({ label: 'Good Day ⭐', pts: 4, bonus: true }); }
+
+  if (entry.gym) {
+    const gs = calcGymStreakLegacy(username, dateStr);
+    if (gs > 0 && gs % 3 === 0) { pos += gs; notes.push({ label: `🔥 Gym Streak ${gs} days`, pts: gs, bonus: true }); }
+  }
+  if (cleanSheet) {
+    const gds = goodDayStreakOnDayLegacy(username, dateStr);
+    if (gds > 0 && gds % 4 === 0) { pos += gds; notes.push({ label: `⭐ Good Day Streak ${gds} days`, pts: gds, bonus: true }); }
+  }
+
+  return { score: pos - neg, notes, cleanSheet, streakActive: false };
+}
+
+// ── Jun 22+ new scoring ──
+function _calcDayScoreNew(entry, username, dateStr) {
+  let pos = 0, neg = 0, notes = [];
+
+  if (entry.gym) { pos += 10; notes.push({ label: 'Gym', pts: 10 }); }
+
+  if (entry.activity === 'Yes') { pos += 5; notes.push({ label: 'Activity', pts: 5 }); }
 
   const pPts = proteinPts(entry.protein);
   if (pPts !== 0) {
@@ -1548,37 +1592,28 @@ function calcDayScore(entry, username, dateStr) {
   }
 
   (entry.badHabits || []).forEach(b => {
-    const pts = BAD_PTS[b] || -10;
-    neg += Math.abs(pts);
-    notes.push({ label: b, pts });
+    const pts = BAD_PTS[b] || -10; neg += Math.abs(pts); notes.push({ label: b, pts });
   });
 
-  // Good Day: Gym + Protein 75g+ + No Bad Habits (activity not required)
   let cleanSheet = entry.gym && proteinGoodDay(entry.protein) && (entry.badHabits || []).length === 0;
   if (cleanSheet) { pos += 4; notes.push({ label: 'Good Day ⭐', pts: 4, bonus: true }); }
 
-  // Gym streak milestone — every 3rd day, tiered flat bonus
   if (entry.gym) {
     const gs = gymStreakOnDay(username, dateStr);
     if (gs > 0 && gs % 3 === 0) {
       const bonus = gs <= 15 ? 3 : gs <= 30 ? 5 : 7;
-      pos += bonus;
-      notes.push({ label: `🔥 Gym Streak ${gs} days`, pts: bonus, bonus: true });
+      pos += bonus; notes.push({ label: `🔥 Gym Streak ${gs} days`, pts: bonus, bonus: true });
     }
   }
-
-  // Good Day streak milestone — every 3rd day, tiered flat bonus
   if (cleanSheet) {
     const gds = goodDayStreakOnDay(username, dateStr);
     if (gds > 0 && gds % 3 === 0) {
       const bonus = gds <= 15 ? 3 : gds <= 30 ? 5 : 7;
-      pos += bonus;
-      notes.push({ label: `⭐ Good Day Streak ${gds} days`, pts: bonus, bonus: true });
+      pos += bonus; notes.push({ label: `⭐ Good Day Streak ${gds} days`, pts: bonus, bonus: true });
     }
   }
 
-  const score = pos - neg;
-  return { score, notes, cleanSheet, streakActive: false };
+  return { score: pos - neg, notes, cleanSheet, streakActive: false };
 }
 
 function getTotalScore(username) {
