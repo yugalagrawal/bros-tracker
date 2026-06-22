@@ -1488,22 +1488,51 @@ function goodDayStreakOnDayLegacy(username, dateStr) {
   return streak;
 }
 
-// First 6 days: grace period, no window check.
 // Returns { streak, streakStartDate }.
+// Pre-Jun 22: legacy rest-day system. Jun 22+: rolling 5-of-7 applied ONLY to Jun 22+ dates
+// so pre-Jun 22 history is never retroactively invalidated.
 function calcGymStreak(username, upToDate) {
+  const TRANSITION = '2026-06-22';
   const log = getUserLog(username);
-  const dates = getDateRange(START_DATE, upToDate);
-  if (dates.length === 0) return { streak: 0, streakStartDate: upToDate };
+
+  if (upToDate < TRANSITION) {
+    // Pure legacy — compute streakStartDate too
+    const dates = getDateRange(START_DATE, upToDate);
+    let streak = 0, restAvail = 0, startIdx = 0;
+    for (let i = 0; i < dates.length; i++) {
+      if (log[dates[i]] && log[dates[i]].gym) {
+        streak++;
+        if (streak % 6 === 0) restAvail++;
+      } else {
+        if (restAvail > 0) { restAvail--; }
+        else { streak = 0; restAvail = 0; startIdx = i + 1; }
+      }
+    }
+    return { streak, streakStartDate: dates[startIdx] || upToDate };
+  }
+
+  // Jun 22+: get legacy base, then rolling window on Jun 22+ dates only
+  const legacyBase = calcGymStreakLegacy(username, '2026-06-21');
+  const newDates = getDateRange(TRANSITION, upToDate);
 
   let lastFailIdx = -1;
-  for (let i = 6; i < dates.length; i++) {
-    const window = dates.slice(i - 6, i + 1);
+  for (let i = 6; i < newDates.length; i++) {
+    const window = newDates.slice(i - 6, i + 1);
     const gymCount = window.filter(d => log[d] && log[d].gym).length;
     if (gymCount < 5) lastFailIdx = i;
   }
 
-  const streakStartIdx = lastFailIdx + 1;
-  return { streak: dates.length - streakStartIdx, streakStartDate: dates[streakStartIdx] || upToDate };
+  if (lastFailIdx === -1) {
+    // No failure in new era — carry legacy forward
+    const totalStreak = legacyBase + newDates.length;
+    const allDates = getDateRange(START_DATE, upToDate);
+    const startIdx = Math.max(0, allDates.length - totalStreak);
+    return { streak: totalStreak, streakStartDate: allDates[startIdx] || upToDate };
+  } else {
+    // Failed in new era — streak is only post-failure new dates
+    const streakStartIdx = lastFailIdx + 1;
+    return { streak: newDates.length - streakStartIdx, streakStartDate: newDates[streakStartIdx] || upToDate };
+  }
 }
 
 // Count gym streak ON a specific day (including that day)
