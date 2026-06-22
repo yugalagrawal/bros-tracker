@@ -1455,6 +1455,39 @@ const BAD_PTS = { Smoke: -20, Drink: -30, 'Junk Diet': -10 };
 
 // Gym streak — rolling 5-out-of-7 window.
 // Streak = days since the last 7-day window that had fewer than 5 gym days.
+// Legacy streak functions (used for scoring dates before Jun 22 2026)
+function calcGymStreakLegacy(username, upToDate) {
+  const log = getUserLog(username);
+  const dates = getDateRange(START_DATE, upToDate);
+  let streak = 0, restDaysAvailable = 0;
+  for (const d of dates) {
+    if (log[d] && log[d].gym) {
+      streak++;
+      if (streak % 6 === 0) restDaysAvailable++;
+    } else {
+      if (restDaysAvailable > 0) { restDaysAvailable--; }
+      else { streak = 0; restDaysAvailable = 0; }
+    }
+  }
+  return streak;
+}
+function goodDayStreakOnDayLegacy(username, dateStr) {
+  const log = getUserLog(username);
+  const dates = getDateRange(START_DATE, dateStr);
+  const oldProteinGoodDay = v => v === true || (typeof v === 'number' && v >= 2);
+  let streak = 0;
+  for (let i = dates.length - 1; i >= 0; i--) {
+    const d = dates[i];
+    const e = log[d];
+    const isGood = e && e.gym && e.activity &&
+      (e.activity !== 'Other' || getApprovalStatus(username, d) === 'approved') &&
+      oldProteinGoodDay(e.protein) && (e.badHabits || []).length === 0;
+    if (isGood) streak++;
+    else break;
+  }
+  return streak;
+}
+
 // First 6 days: grace period, no window check.
 // Returns { streak, streakStartDate }.
 function calcGymStreak(username, upToDate) {
@@ -1520,11 +1553,11 @@ function calcDayScore(entry, username, dateStr) {
     notes.push({ label: b, pts });
   });
 
-  // Good Day bonus: Gym + Protein 75g+ + No Bad Habits
+  // Good Day: Gym + Protein 75g+ + No Bad Habits (activity not required)
   let cleanSheet = entry.gym && proteinGoodDay(entry.protein) && (entry.badHabits || []).length === 0;
   if (cleanSheet) { pos += 4; notes.push({ label: 'Good Day ⭐', pts: 4, bonus: true }); }
 
-  // Gym streak milestone bonus — every 3rd day, tiered flat bonus
+  // Gym streak milestone — every 3rd day, tiered flat bonus
   if (entry.gym) {
     const gs = gymStreakOnDay(username, dateStr);
     if (gs > 0 && gs % 3 === 0) {
@@ -1534,7 +1567,7 @@ function calcDayScore(entry, username, dateStr) {
     }
   }
 
-  // Good Day streak milestone bonus — every 3rd day, tiered flat bonus
+  // Good Day streak milestone — every 3rd day, tiered flat bonus
   if (cleanSheet) {
     const gds = goodDayStreakOnDay(username, dateStr);
     if (gds > 0 && gds % 3 === 0) {
