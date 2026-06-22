@@ -1093,10 +1093,6 @@
       <span class="nav-icon">📝</span>
       <span class="nav-label">Log</span>
     </div>
-    <div class="nav-tab" data-tab="history" onclick="switchTab('history')">
-      <span class="nav-icon">📅</span>
-      <span class="nav-label">History</span>
-    </div>
     <div class="nav-tab" data-tab="awards" onclick="switchTab('awards')">
       <span class="nav-icon">🏅</span>
       <span class="nav-label">Awards</span>
@@ -1104,6 +1100,10 @@
     <div class="nav-tab" data-tab="rules" onclick="switchTab('rules')">
       <span class="nav-icon">📋</span>
       <span class="nav-label">Rules</span>
+    </div>
+    <div class="nav-tab" data-tab="prbook" onclick="switchTab('prbook')">
+      <span class="nav-icon">💪</span>
+      <span class="nav-label">PR Book</span>
     </div>
     <div class="nav-tab" data-tab="study" onclick="switchTab('study')">
       <span class="nav-icon">📚</span>
@@ -1182,19 +1182,44 @@
     <div class="section" id="tab-rules">
       <div class="card">
         <div class="card-title">📋 Scoring Rules</div>
+
+        <div style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:0.5px;padding:10px 0 4px;">DAILY POINTS</div>
         <div class="rules-item"><span class="ri-label">🏋️ Gym session</span><span class="ri-pts pos">+10 pts</span></div>
-        <div class="rules-item"><span class="ri-label">🏃 Activity (Run / Sports / Other*)</span><span class="ri-pts pos">+3 pts</span></div>
-        <div class="rules-item"><span class="ri-label">🥩 Protein 0–75g</span><span class="ri-pts neg">0 pts</span></div>
-        <div class="rules-item"><span class="ri-label">🥩 Protein 75–110g</span><span class="ri-pts pos">+2 pts</span></div>
-        <div class="rules-item"><span class="ri-label">🥩 Protein 110g+</span><span class="ri-pts pos">+10 pts</span></div>
+        <div class="rules-item"><span class="ri-label">🏃 Activity — Steps 10k+ / Run 4km+ / Sports 1hr+</span><span class="ri-pts pos">+5 pts</span></div>
+        <div class="rules-item"><span class="ri-label">⭐ Good Day — Gym + Protein 75g+ + No Bad Habits</span><span class="ri-pts bonus">+4 bonus</span></div>
+
+        <div style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:0.5px;padding:10px 0 4px;">PROTEIN</div>
+        <div class="rules-item"><span class="ri-label">🥩 0–50g</span><span class="ri-pts neg">−5 pts</span></div>
+        <div class="rules-item"><span class="ri-label">🥩 50–75g</span><span class="ri-pts neg">0 pts</span></div>
+        <div class="rules-item"><span class="ri-label">🥩 75–110g</span><span class="ri-pts pos">+3 pts</span></div>
+        <div class="rules-item"><span class="ri-label">🥩 110g+</span><span class="ri-pts pos">+5 pts</span></div>
+
+        <div style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:0.5px;padding:10px 0 4px;">BAD HABITS</div>
         <div class="rules-item"><span class="ri-label">🚬 Smoke</span><span class="ri-pts neg">−20 pts</span></div>
         <div class="rules-item"><span class="ri-label">🍺 Drink</span><span class="ri-pts neg">−30 pts</span></div>
         <div class="rules-item"><span class="ri-label">🍔 Junk Food</span><span class="ri-pts neg">−10 pts</span></div>
-        <div class="rules-item"><span class="ri-label">⭐ Good Day (Gym + Activity + 75g Protein + No Bad Habits)</span><span class="ri-pts bonus">+4 bonus</span></div>
-        <div class="rules-item"><span class="ri-label">🛌 Gym Rest Day — earned every 6 consecutive gym days; use once to skip without breaking streak</span><span class="ri-pts orange">protect</span></div>
-        <div class="rules-item"><span class="ri-label">🔥 Gym Streak milestone (every 3rd day: +3, +6, +9…)</span><span class="ri-pts pos">+N pts</span></div>
-        <div class="rules-item"><span class="ri-label">⭐ Good Day Streak milestone (every 4th day: +4, +8, +12…)</span><span class="ri-pts pos">+N pts</span></div>
-        <div class="rules-item"><span class="ri-label" style="color:var(--muted);font-size:11px;">* Other activity requires approval from both bros</span><span></span></div>
+
+        <div style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:0.5px;padding:10px 0 4px;">🔥 GYM STREAK</div>
+        <div class="rules-item"><span class="ri-label">Rolling window — need 5 gym days in any 7-day window (2 rest days/week built-in)</span><span class="ri-pts pos">active</span></div>
+        <div class="rules-item" style="flex-direction:column;align-items:flex-start;gap:4px;">
+          <span class="ri-label" style="font-weight:600;">Milestone bonus every 3rd gym day</span>
+          <div style="display:flex;flex-direction:column;gap:3px;padding-left:8px;width:100%;">
+            <div style="display:flex;justify-content:space-between;font-size:12px;"><span style="color:var(--muted);">Days 3 – 15</span><span class="ri-pts pos">+3 pts</span></div>
+            <div style="display:flex;justify-content:space-between;font-size:12px;"><span style="color:var(--muted);">Days 16 – 30</span><span class="ri-pts pos">+5 pts</span></div>
+            <div style="display:flex;justify-content:space-between;font-size:12px;"><span style="color:var(--muted);">Days 31+</span><span class="ri-pts pos">+7 pts</span></div>
+          </div>
+        </div>
+
+        <div style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:0.5px;padding:10px 0 4px;">⭐ GOOD DAY STREAK</div>
+        <div class="rules-item"><span class="ri-label">Gym rest days are neutral — don't break the streak</span><span class="ri-pts bonus">protected</span></div>
+        <div class="rules-item" style="flex-direction:column;align-items:flex-start;gap:4px;">
+          <span class="ri-label" style="font-weight:600;">Milestone bonus every 3rd good day</span>
+          <div style="display:flex;flex-direction:column;gap:3px;padding-left:8px;width:100%;">
+            <div style="display:flex;justify-content:space-between;font-size:12px;"><span style="color:var(--muted);">Days 3 – 15</span><span class="ri-pts pos">+3 pts</span></div>
+            <div style="display:flex;justify-content:space-between;font-size:12px;"><span style="color:var(--muted);">Days 16 – 30</span><span class="ri-pts pos">+5 pts</span></div>
+            <div style="display:flex;justify-content:space-between;font-size:12px;"><span style="color:var(--muted);">Days 31+</span><span class="ri-pts pos">+7 pts</span></div>
+          </div>
+        </div>
       </div>
 
       <div class="card">
@@ -1230,6 +1255,11 @@
         <div class="card-title">📅 Week-by-Week Results</div>
         <div id="studyWeeksList"></div>
       </div>
+    </div>
+
+    <!-- ── PR BOOK ── -->
+    <div class="section" id="tab-prbook">
+      <div id="prbookArea"></div>
     </div>
 
   </div>
@@ -1423,30 +1453,24 @@ function getPendingApprovalsFor(voter) {
 // ── SCORING ──
 const BAD_PTS = { Smoke: -20, Drink: -30, 'Junk Diet': -10 };
 
-// Core gym-streak calculator (forward scan) with rest-day support.
-// Returns { streak, restDaysAvailable }.
-// Rule: earn 1 rest day at every 6th gym-streak milestone (6, 12, 18…).
-// Rest days accumulate — 12 straight days = 2 banked rest days = 2 safe skips.
+// Gym streak — rolling 5-out-of-7 window.
+// Streak = days since the last 7-day window that had fewer than 5 gym days.
+// First 6 days: grace period, no window check.
+// Returns { streak, streakStartDate }.
 function calcGymStreak(username, upToDate) {
   const log = getUserLog(username);
   const dates = getDateRange(START_DATE, upToDate);
-  let streak = 0;
-  let restDaysAvailable = 0;
-  for (const d of dates) {
-    if (log[d] && log[d].gym) {
-      streak++;
-      if (streak % 6 === 0) restDaysAvailable++;
-    } else {
-      if (restDaysAvailable > 0) {
-        restDaysAvailable--;
-        // streak preserved — rest day consumed
-      } else {
-        streak = 0;
-        restDaysAvailable = 0;
-      }
-    }
+  if (dates.length === 0) return { streak: 0, streakStartDate: upToDate };
+
+  let lastFailIdx = -1;
+  for (let i = 6; i < dates.length; i++) {
+    const window = dates.slice(i - 6, i + 1);
+    const gymCount = window.filter(d => log[d] && log[d].gym).length;
+    if (gymCount < 5) lastFailIdx = i;
   }
-  return { streak, restDaysAvailable };
+
+  const streakStartIdx = lastFailIdx + 1;
+  return { streak: dates.length - streakStartIdx, streakStartDate: dates[streakStartIdx] || upToDate };
 }
 
 // Count gym streak ON a specific day (including that day)
@@ -1454,7 +1478,9 @@ function gymStreakOnDay(username, dateStr) {
   return calcGymStreak(username, dateStr).streak;
 }
 
-// Count good day streak ON a specific day (including that day)
+// Count good day streak ON a specific day (including that day).
+// Good Day = Gym + Protein 75g+ + No Bad Habits.
+// Rest days (no gym logged) are neutral — don't extend or break the streak.
 function goodDayStreakOnDay(username, dateStr) {
   const log = getUserLog(username);
   const dates = getDateRange(START_DATE, dateStr);
@@ -1462,9 +1488,10 @@ function goodDayStreakOnDay(username, dateStr) {
   for (let i = dates.length - 1; i >= 0; i--) {
     const d = dates[i];
     const e = log[d];
-    const isGood = e && e.gym && e.activity &&
-      (e.activity !== 'Other' || getApprovalStatus(username, d) === 'approved') &&
-      proteinGoodDay(e.protein) && (e.badHabits || []).length === 0;
+    if (!e) continue; // unlogged day = neutral, skip
+    if (!e.gym) continue; // rest day = neutral, skip
+    // Gym day: must be a Good Day or streak breaks
+    const isGood = proteinGoodDay(e.protein) && (e.badHabits || []).length === 0;
     if (isGood) streak++;
     else break;
   }
@@ -1477,17 +1504,15 @@ function calcDayScore(entry, username, dateStr) {
 
   if (entry.gym) { pos += 10; notes.push({ label: 'Gym', pts: 10 }); }
 
-  if (entry.activity) {
-    if (entry.activity === 'Other') {
-      const status = getApprovalStatus(username, dateStr);
-      if (status === 'approved') { pos += 3; notes.push({ label: entry.activityOther || 'Other', pts: 3 }); }
-    } else {
-      pos += 3; notes.push({ label: entry.activity, pts: 3 });
-    }
+  if (entry.activity === 'Yes') {
+    pos += 5; notes.push({ label: 'Activity', pts: 5 });
   }
 
   const pPts = proteinPts(entry.protein);
-  if (pPts > 0) { pos += pPts; notes.push({ label: proteinLabel(entry.protein), pts: pPts }); }
+  if (pPts !== 0) {
+    if (pPts > 0) pos += pPts; else neg += Math.abs(pPts);
+    notes.push({ label: proteinLabel(entry.protein), pts: pPts });
+  }
 
   (entry.badHabits || []).forEach(b => {
     const pts = BAD_PTS[b] || -10;
@@ -1495,26 +1520,27 @@ function calcDayScore(entry, username, dateStr) {
     notes.push({ label: b, pts });
   });
 
-  // Good Day bonus: Gym + Activity (approved if Other) + 75g protein + no bad habits
-  const activityCounts = entry.activity && (entry.activity !== 'Other' || getApprovalStatus(username, dateStr) === 'approved');
-  let cleanSheet = entry.gym && activityCounts && proteinGoodDay(entry.protein) && (entry.badHabits || []).length === 0;
+  // Good Day bonus: Gym + Protein 75g+ + No Bad Habits
+  let cleanSheet = entry.gym && proteinGoodDay(entry.protein) && (entry.badHabits || []).length === 0;
   if (cleanSheet) { pos += 4; notes.push({ label: 'Good Day ⭐', pts: 4, bonus: true }); }
 
-  // Gym streak milestone bonus — every multiple of 3
+  // Gym streak milestone bonus — every 3rd day, tiered flat bonus
   if (entry.gym) {
     const gs = gymStreakOnDay(username, dateStr);
     if (gs > 0 && gs % 3 === 0) {
-      pos += gs;
-      notes.push({ label: `🔥 Gym Streak ${gs} days`, pts: gs, bonus: true });
+      const bonus = gs <= 15 ? 3 : gs <= 30 ? 5 : 7;
+      pos += bonus;
+      notes.push({ label: `🔥 Gym Streak ${gs} days`, pts: bonus, bonus: true });
     }
   }
 
-  // Good Day streak milestone bonus — every multiple of 4
+  // Good Day streak milestone bonus — every 3rd day, tiered flat bonus
   if (cleanSheet) {
     const gds = goodDayStreakOnDay(username, dateStr);
-    if (gds > 0 && gds % 4 === 0) {
-      pos += gds;
-      notes.push({ label: `⭐ Good Day Streak ${gds} days`, pts: gds, bonus: true });
+    if (gds > 0 && gds % 3 === 0) {
+      const bonus = gds <= 15 ? 3 : gds <= 30 ? 5 : 7;
+      pos += bonus;
+      notes.push({ label: `⭐ Good Day Streak ${gds} days`, pts: bonus, bonus: true });
     }
   }
 
@@ -1537,20 +1563,7 @@ function getCurrentStreak(username) {
 }
 
 function getGoodDayStreak(username) {
-  const log = getUserLog(username);
-  const yesterday = yesterdayStr();
-  const dates = getDateRange(START_DATE, yesterday);
-  let streak = 0;
-  for (let i = dates.length - 1; i >= 0; i--) {
-    const d = dates[i];
-    const e = log[d];
-    const isGoodDay = e && e.gym && e.activity &&
-      (e.activity !== 'Other' || getApprovalStatus(username, d) === 'approved') &&
-      proteinGoodDay(e.protein) && (e.badHabits || []).length === 0;
-    if (isGoodDay) streak++;
-    else break;
-  }
-  return streak;
+  return goodDayStreakOnDay(username, yesterdayStr());
 }
 
 function getLoggedDays(username) {
@@ -1570,88 +1583,120 @@ function getDateRange(start, end) {
 
 // ── TRASH TALK ──
 function generateTrashTalk() {
-  // Seed by today's date so it's stable all day but changes daily
   const today = todayStr();
   const seed = today.split('-').reduce((a, b) => a * 31 + parseInt(b), 0);
   const pick = (arr) => arr[Math.abs(seed + arr.length * 17) % arr.length];
 
   const yesterday = yesterdayStr();
-  const sorted = USERS.map(u => {
+
+  // Build full per-user stats
+  const stats = USERS.map(u => {
     const log = getUserLog(u.username);
-    const yLog = log[yesterday];
-    // last 7 days
-    const last7 = getDateRange(START_DATE, yesterday).slice(-7).map(d => log[d]).filter(Boolean);
-    const gymDays7 = last7.filter(e => e.gym).length;
-    const badDays7 = last7.filter(e => (e.badHabits||[]).length > 0).length;
-    const drinkDays7 = last7.filter(e => (e.badHabits||[]).includes('Drink')).length;
-    const smokeDays7 = last7.filter(e => (e.badHabits||[]).includes('Smoke')).length;
-    const junkDays7  = last7.filter(e => (e.badHabits||[]).includes('Junk Diet')).length;
-    const proteinDays7 = last7.filter(e => e.protein).length;
-    const goodDays7 = last7.filter(e => {
-      const r = calcDayScore(e, u.username, yesterday);
-      return r && r.cleanSheet;
-    }).length;
+    const allDates = getDateRange(START_DATE, yesterday);
+    const last7dates = allDates.slice(-7);
+    const last7 = last7dates.map(d => log[d]).filter(Boolean);
+    const loggedAll = allDates.filter(d => log[d]);
+
+    const gymDays7     = last7.filter(e => e.gym).length;
+    const smokeDays7   = last7.filter(e => (e.badHabits||[]).includes('Smoke')).length;
+    const drinkDays7   = last7.filter(e => (e.badHabits||[]).includes('Drink')).length;
+    const junkDays7    = last7.filter(e => (e.badHabits||[]).includes('Junk Diet')).length;
+    const proteinHigh7 = last7.filter(e => proteinPts(e.protein) >= 3).length;
+    const proteinLow7  = last7.filter(e => proteinPts(e.protein) < 0).length;
+    const goodDays7    = last7.filter(e => { const r = calcDayScore(e, u.username, yesterday); return r && r.cleanSheet; }).length;
+    const { streak }   = calcGymStreak(u.username, yesterday);
+
+    // All-time counts
+    const smokeTotal  = loggedAll.filter(d => (log[d].badHabits||[]).includes('Smoke')).length;
+    const drinkTotal  = loggedAll.filter(d => (log[d].badHabits||[]).includes('Drink')).length;
+    const junkTotal   = loggedAll.filter(d => (log[d].badHabits||[]).includes('Junk Diet')).length;
+    const gymTotal    = loggedAll.filter(d => log[d].gym).length;
+
     return {
       ...u,
       total: getTotalScore(u.username),
-      streak: getCurrentStreak(u.username),
-      yLog, gymDays7, badDays7, drinkDays7, smokeDays7, junkDays7, proteinDays7, goodDays7,
+      streak, gymDays7, smokeDays7, drinkDays7, junkDays7,
+      proteinHigh7, proteinLow7, goodDays7,
+      smokeTotal, drinkTotal, junkTotal, gymTotal,
     };
   }).sort((a, b) => b.total - a.total);
 
-  const [first, second, third] = sorted;
-  const loser = sorted[sorted.length - 1];
-  const leader = sorted[0];
+  const leader = stats[0];
+  const second = stats[1];
+  const last   = stats[stats.length - 1];
 
-  // Build context-aware pool
+  // Per-category offenders (across ALL users, not just score loser)
+  const worstGym    = [...stats].sort((a, b) => a.gymDays7 - b.gymDays7)[0];
+  const worstSmoke  = [...stats].sort((a, b) => b.smokeDays7 - a.smokeDays7)[0];
+  const worstDrink  = [...stats].sort((a, b) => b.drinkDays7 - a.drinkDays7)[0];
+  const worstJunk   = [...stats].sort((a, b) => b.junkDays7 - a.junkDays7)[0];
+  const worstProtein= [...stats].sort((a, b) => b.proteinLow7 - a.proteinLow7)[0];
+  const bestGym     = [...stats].sort((a, b) => b.gymDays7 - a.gymDays7)[0];
+  const bestGoodDay = [...stats].sort((a, b) => b.goodDays7 - a.goodDays7)[0];
+
   const lines = [];
 
-  // Drink shaming
-  if (loser.drinkDays7 >= 3) lines.push(`${loser.username} drank ${loser.drinkDays7} times this week. Bro, this is a FITNESS tracker, not a bar tab. 🍺`);
-  if (loser.drinkDays7 >= 2) lines.push(`${loser.username}'s weekly report: ${loser.drinkDays7} drinks, ${loser.gymDays7} gym days. One of these needs to go up. 🤦`);
-  USERS.forEach(u => {
-    const l = getUserLog(u.username);
-    const last7 = getDateRange(START_DATE, yesterday).slice(-7).map(d => l[d]).filter(Boolean);
-    const drinkDays = last7.filter(e => (e.badHabits||[]).includes('Drink')).length;
-    if (drinkDays >= 4) lines.push(`${u.username} is basically sponsored by alcohol at this point. ${drinkDays} drinks in 7 days. 🥴`);
+  // ── Cross-category observations (gym consistent but bad habits) ──
+  stats.forEach(u => {
+    if (u.gymDays7 >= 5 && u.smokeDays7 >= 2)
+      lines.push(`${u.username} went to gym ${u.gymDays7} days but smoked ${u.smokeDays7} times. Bro you're literally burning your gains. 🚬🏋️`);
+    if (u.gymDays7 >= 5 && u.drinkDays7 >= 2)
+      lines.push(`${u.username}: ${u.gymDays7} gym days, ${u.drinkDays7} drink nights. The gym giveth, the bar taketh away. 🍺`);
+    if (u.gymDays7 >= 5 && u.junkDays7 >= 3)
+      lines.push(`${u.username} is grinding at the gym but eating like it's a cheat month. ${u.junkDays7} junk days. 🍔`);
+    if (u.gymDays7 >= 5 && u.proteinLow7 >= 3)
+      lines.push(`${u.username} showed up to gym ${u.gymDays7} days but hit protein under 50g ${u.proteinLow7} times. That's just cardio with extra steps. 🤷`);
   });
 
-  // Gym praise/shame
-  if (leader.streak >= 7) lines.push(`${leader.username} hasn't missed a gym day in ${leader.streak} days. At this point just move into the gym bro. 🏠🏋️`);
-  if (leader.streak >= 5) lines.push(`${leader.streak}-day streak for ${leader.username}? Someone check if he's human or just a protein shake with legs. 🦾`);
-  if (loser.gymDays7 === 0) lines.push(`${loser.username} has a gym membership and zero gym days this week. Peak investment strategy. 💸`);
-  if (loser.gymDays7 <= 1) lines.push(`${loser.username} went to the gym ${loser.gymDays7} time(s) this week. The gym filed a missing person report. 🚨`);
+  // ── Gym roast — only if actually bad ──
+  if (worstGym.gymDays7 === 0)
+    lines.push(`${worstGym.username} has a gym membership and zero gym sessions this week. Peak investment strategy. 💸`);
+  else if (worstGym.gymDays7 <= 2)
+    lines.push(`${worstGym.username} made it to the gym ${worstGym.gymDays7} time(s) this week. The gym filed a missing person report. 🚨`);
 
-  // Protein
-  if (loser.proteinDays7 <= 2) lines.push(`${loser.username} hit protein goals ${loser.proteinDays7} days out of 7. The gains fairy has officially given up on him. 🧚`);
-  USERS.forEach(u => {
-    const l7 = getDateRange(START_DATE, yesterday).slice(-7).map(d => getUserLog(u.username)[d]).filter(Boolean);
-    if (l7.filter(e => e.protein).length === 7) lines.push(`${u.username} hit 75g protein 7 days straight. Someone's been having relationship problems with a chicken breast. 🍗`);
+  // ── Gym praise ──
+  if (bestGym.gymDays7 >= 6)
+    lines.push(`${bestGym.gymDays7}/7 gym days for ${bestGym.username} this week. Someone check if he's human or just a protein shake with legs. 🦾`);
+  if (leader.streak >= 10)
+    lines.push(`${leader.username} is on a ${leader.streak}-day gym streak. At this point just move into the gym bro. 🏠🏋️`);
+
+  // ── Smoke roast — always targeted at actual smoker ──
+  if (worstSmoke.smokeDays7 >= 3)
+    lines.push(`${worstSmoke.username} logged smoking ${worstSmoke.smokeDays7} times this week. The gym air compressor works better than your lungs rn. 🫁`);
+  else if (worstSmoke.smokeDays7 >= 1)
+    lines.push(`${worstSmoke.username} had ${worstSmoke.smokeDays7} smoke day(s) this week. One day those gains are going to file a complaint. 🚬`);
+
+  // ── Drink roast — targeted ──
+  if (worstDrink.drinkDays7 >= 4)
+    lines.push(`${worstDrink.username} is basically sponsored by alcohol. ${worstDrink.drinkDays7} drinks in 7 days. 🥴`);
+  else if (worstDrink.drinkDays7 >= 2)
+    lines.push(`${worstDrink.username}'s weekly report: ${worstDrink.drinkDays7} drinks, ${worstDrink.gymDays7} gym days. One of these needs to go up. 🤦`);
+
+  // ── Junk roast — targeted ──
+  if (worstJunk.junkDays7 >= 3)
+    lines.push(`${worstJunk.username}: ${worstJunk.junkDays7} junk food days this week. Even McDonald's is concerned. 🍔`);
+
+  // ── Protein ──
+  if (worstProtein.proteinLow7 >= 3)
+    lines.push(`${worstProtein.username} was under 50g protein ${worstProtein.proteinLow7} days this week. The gains fairy has officially given up. 🧚`);
+  stats.forEach(u => {
+    if (u.proteinHigh7 === 7)
+      lines.push(`${u.username} hit 75g+ protein 7 days straight. Someone's been having relationship problems with a chicken breast. 🍗`);
   });
 
-  // Smoke
-  if (loser.smokeDays7 >= 2) lines.push(`${loser.username} logged smoking ${loser.smokeDays7} times this week. Bro the gym air compressor works better than your lungs rn. 🫁`);
+  // ── Good day praise ──
+  if (bestGoodDay.goodDays7 >= 5)
+    lines.push(`${bestGoodDay.goodDays7} Good Days in a week for ${bestGoodDay.username}. The man is basically a walking supplement ad. 💊`);
 
-  // Junk food
-  if (loser.junkDays7 >= 3) lines.push(`${loser.username}: ${loser.junkDays7} junk food days this week. Even McDonald's is concerned. 🍔`);
+  // ── Score gap — only if meaningful ──
+  const gap = leader.total - last.total;
+  if (gap > 150) lines.push(`${leader.username} leads ${last.username} by ${gap} pts. That's not a competition, that's a documentary. 🎬`);
+  else if (gap > 60) lines.push(`${leader.username} vs ${last.username}: ${leader.total} vs ${last.total} pts. One is grinding, the other is just… existing. 🌿`);
 
-  // Good day streaks
-  if (leader.goodDays7 >= 5) lines.push(`${leader.goodDays7} Good Days in a week for ${leader.username}?! The man is basically a walking supplement ad. 💊`);
-
-  // Score gap
-  const gap = first.total - loser.total;
-  if (gap > 100) lines.push(`The gap between ${first.username} and ${loser.username} is ${gap} pts. That's not a competition, that's a documentary. 🎬`);
-  if (gap > 50)  lines.push(`${first.username} vs ${loser.username}: ${first.total} pts vs ${loser.total} pts. One of you is grinding, the other is just… existing. 🌿`);
-
-  // Generic bangers
-  lines.push(`${second.username} is comfortably in second place. The most dangerous position — too comfortable to grind, too close to quit. ⚠️`);
-  lines.push(`${loser.username} said "new year new me" and meant "new year, same gym avoidance." 🎉`);
-  lines.push(`If ${leader.username} was a stock, you'd buy it. If ${loser.username} was a stock, you'd short it. 📉`);
-  lines.push(`${loser.username}'s fitness journey: still in chapter 1. ${leader.username} is already writing the sequel. 📖`);
-  lines.push(`Somewhere ${loser.username}'s gym shoes are gathering dust and wondering what they did wrong. 👟`);
-  lines.push(`${first.username} at the top, ${second.username} surviving, ${loser.username} being ${loser.username}. This is fine. 🔥🔥🔥`);
-  lines.push(`Fun fact: ${loser.username}'s couch knows his body shape better than any gym machine. 🛋️`);
-  lines.push(`${leader.username} is built different. Or just shows up different. Which for the rest of you means the same thing. 🏆`);
+  // ── Fallback: something always fires ──
+  lines.push(`${second.username} is sitting comfortably in second. Most dangerous position — too close to quit, too far to panic. ⚠️`);
+  lines.push(`${leader.username} is leading with ${leader.total} pts. ${last.username} is… also participating. 🏆`);
+  lines.push(`Week ${Math.ceil(getDateRange(START_DATE, yesterday).length / 7)} update: ${leader.username} still grinding, ${last.username} still finding excuses. 📅`);
 
   return pick(lines.filter(Boolean));
 }
@@ -1895,6 +1940,7 @@ function switchTab(tab) {
   if (tab === 'awards') renderAwards();
   if (tab === 'rules') renderAdminPanel();
   if (tab === 'study') renderStudyTab();
+  if (tab === 'prbook') renderPRBook();
 }
 
 // ── RENDER ALL ──
@@ -1950,8 +1996,11 @@ function renderApprovals() {
 
 function renderLeaderboard() {
   const scores = USERS.map(u => {
-    const { streak, restDaysAvailable } = calcGymStreak(u.username, yesterdayStr());
-    return { ...u, total: getTotalScore(u.username), streak, restDaysAvailable, logged: getLoggedDays(u.username) };
+    const { streak, streakStartDate } = calcGymStreak(u.username, yesterdayStr());
+    const log = getUserLog(u.username);
+    const streakDates = getDateRange(streakStartDate, yesterdayStr()).slice(-7);
+    const last7 = streakDates.map(d => !!(log[d] && log[d].gym));
+    return { ...u, total: getTotalScore(u.username), streak, logged: getLoggedDays(u.username), last7 };
   }).sort((a, b) => b.total - a.total);
 
   // Dense ranking: same score = same medal, next unique score = next medal
@@ -1972,8 +2021,13 @@ function renderLeaderboard() {
         <div class="lb-name">${u.username} ${u.username === currentUser ? '<span style="font-size:10px;color:var(--muted)">(you)</span>' : ''}</div>
         <div class="lb-sub">
           ${u.logged} days logged
-          ${u.streak >= 3 ? `&nbsp;<span class="streak-badge">🔥 ${u.streak}-day streak</span>` : u.streak > 0 ? `&nbsp;<span style="font-size:11px;color:var(--muted)">🔥 ${u.streak} days</span>` : ''}
-          ${u.restDaysAvailable > 0 ? `&nbsp;<span style="font-size:11px;font-weight:700;color:var(--gold)">🛌 ${u.restDaysAvailable} rest day${u.restDaysAvailable > 1 ? 's' : ''}</span>` : ''}
+          ${u.streak >= 5 ? `&nbsp;<span class="streak-badge">🔥 ${u.streak}-day streak</span>` : u.streak > 0 ? `&nbsp;<span style="font-size:11px;color:var(--muted)">🔥 ${u.streak} days</span>` : ''}
+        </div>
+        <div style="display:flex;gap:3px;margin-top:4px;">
+          ${u.last7.map(hit => hit
+            ? `<span style="font-size:11px;background:rgba(0,229,160,0.15);color:#00c48c;border:1px solid rgba(0,229,160,0.3);border-radius:3px;width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center;font-weight:700;">✓</span>`
+            : `<span style="font-size:11px;background:rgba(248,81,73,0.1);color:var(--danger);border:1px solid rgba(248,81,73,0.25);border-radius:3px;width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center;font-weight:700;">✗</span>`
+          ).join('')}
         </div>
       </div>
       <div class="lb-score">${u.total}<br><span class="pts">pts</span></div>
@@ -1995,7 +2049,7 @@ function renderMyStats() {
     return e.gym && e.activity && (e.badHabits || []).length === 0;
   }).length;
   const totalDays = allDates.length;
-  const { streak: gymStreak, restDaysAvailable } = calcGymStreak(currentUser, yesterdayStr());
+  const { streak: gymStreak } = calcGymStreak(currentUser, yesterdayStr());
   const goodDayStreak = getGoodDayStreak(currentUser);
   const total         = getTotalScore(currentUser);
 
@@ -2010,7 +2064,7 @@ function renderMyStats() {
     </div>
     <div class="stat-tile">
       <div class="st-val" style="color:var(--accent2)">${gymStreak}</div>
-      <div class="st-label">🏋️ Gym Streak${restDaysAvailable > 0 ? `<br><span style="font-size:10px;color:var(--gold);font-weight:700;">🛌 ${restDaysAvailable} Rest Day${restDaysAvailable > 1 ? 's' : ''}</span>` : ''}</div>
+      <div class="st-label">🏋️ Gym Streak</div>
     </div>
     <div class="stat-tile">
       <div class="st-val" style="color:var(--gold)">${goodDayStreak}</div>
@@ -2210,13 +2264,10 @@ function renderBroLogs() {
 
 function isFormValid() {
   if (logState.gym === null) return false;
-  if (logState.activity === 'Other' && !logState.activityOther.trim()) return false;
-  if (logState.activity === 'Sports' && !logState.sportsType) return false;
   return true;
 }
 
 function buildLogFormHTML() {
-  const otherInvalid = logState.activity === 'Other' && !logState.activityOther.trim();
   return `
     <div class="form-group">
       <label>🏋️ Did you hit the gym?</label>
@@ -2229,48 +2280,19 @@ function buildLogFormHTML() {
     <div class="form-group">
       <label>🏃 Activity today?</label>
       <div class="toggle-group">
-        <button class="toggle-btn ${logState.activity === 'Running' ? 'selected-activity' : ''}" onclick="setActivity('Running')">🚶 Walk/Run*</button>
-        <button class="toggle-btn ${logState.activity === 'Sports' ? 'selected-activity' : ''}" onclick="setActivity('Sports')">⚽ Sports</button>
-        <button class="toggle-btn ${logState.activity === 'Other' ? 'selected-activity' : ''}" onclick="setActivity('Other')">🎯 Other</button>
-        <button class="toggle-btn ${logState.activity === null ? 'selected-no' : ''}" onclick="setActivity(null)" style="font-size:12px;">🚫 None</button>
+        <button class="toggle-btn ${logState.activity === 'Yes' ? 'selected-activity' : ''}" onclick="setActivity('Yes')">✅ Yes</button>
+        <button class="toggle-btn ${logState.activity === null ? 'selected-no' : ''}" onclick="setActivity(null)">🚫 None</button>
       </div>
-      <p style="font-size:11px;color:var(--danger);margin-top:6px;">* Don't select Walk/Run if distance was less than 3km — select NONE instead.</p>
-      ${logState.activity === 'Sports' ? `
-        <div style="margin-top:10px;">
-          <select id="sportsTypeSelect" onchange="setSportsType(this.value)"
-            style="width:100%;background:var(--surface);border:1.5px solid ${!logState.sportsType ? 'var(--danger)' : 'var(--accent3)'};border-radius:8px;padding:10px 14px;color:${logState.sportsType ? 'var(--text)' : 'var(--muted)'};font-size:14px;outline:none;">
-            <option value="" disabled ${!logState.sportsType ? 'selected' : ''}>Select sport…</option>
-            <option value="Badminton"    ${logState.sportsType==='Badminton'    ? 'selected':''}>🏸 Badminton</option>
-            <option value="Table Tennis" ${logState.sportsType==='Table Tennis' ? 'selected':''}>🏓 Table Tennis</option>
-            <option value="Swimming"     ${logState.sportsType==='Swimming'     ? 'selected':''}>🏊 Swimming</option>
-            <option value="Cricket"      ${logState.sportsType==='Cricket'      ? 'selected':''}>🏏 Cricket</option>
-            <option value="Football"     ${logState.sportsType==='Football'     ? 'selected':''}>⚽ Football</option>
-          </select>
-          ${!logState.sportsType ? '<p style="font-size:11px;color:var(--danger);margin-top:5px;">⚠️ Please select a sport to continue.</p>' : ''}
-        </div>
-      ` : ''}
-      ${logState.activity === 'Other' ? `
-        <div style="margin-top:10px;">
-          <input
-            type="text"
-            id="otherActivityInput"
-            placeholder="What did you do? (required)"
-            value="${logState.activityOther}"
-            oninput="setOtherActivity(this.value)"
-            style="width:100%;background:var(--surface);border:1.5px solid ${otherInvalid ? 'var(--danger)' : 'var(--accent3)'};border-radius:8px;padding:10px 14px;color:var(--text);font-size:14px;outline:none;"
-            autofocus
-          />
-          ${otherInvalid ? '<p style="font-size:11px;color:var(--danger);margin-top:5px;">⚠️ Please describe the activity to continue.</p>' : ''}
-        </div>
-      ` : ''}
+      <p style="font-size:11px;color:var(--accent3);background:rgba(99,102,241,0.08);border:1px solid rgba(99,102,241,0.2);border-radius:6px;padding:5px 8px;margin-top:6px;">Select Yes only if done any one of the following: Steps 10k+ &nbsp;|&nbsp; Run 4km+ &nbsp;|&nbsp; Sports session 1hr+</p>
     </div>
 
     <div class="form-group">
       <label>🥩 Protein Today</label>
       <div class="toggle-group">
-        <button class="toggle-btn ${logState.protein === 0  ? 'selected-no'  : ''}" onclick="setProtein(0)">0–75g (0)</button>
-        <button class="toggle-btn ${logState.protein === 2  ? 'selected-yes' : ''}" onclick="setProtein(2)">75–110g (+2)</button>
-        <button class="toggle-btn ${logState.protein === 10 ? 'selected-yes' : ''}" onclick="setProtein(10)">110g+ (+10)</button>
+        <button class="toggle-btn ${logState.protein === -5 ? 'selected-bad' : ''}" onclick="setProtein(-5)">0–50g (−5)</button>
+        <button class="toggle-btn ${logState.protein === 0  ? 'selected-no'  : ''}" onclick="setProtein(0)">50–75g (0)</button>
+        <button class="toggle-btn ${logState.protein === 3  ? 'selected-yes' : ''}" onclick="setProtein(3)">75–110g (+3)</button>
+        <button class="toggle-btn ${logState.protein === 5  ? 'selected-yes' : ''}" onclick="setProtein(5)">110g+ (+5)</button>
       </div>
     </div>
 
@@ -2298,20 +2320,14 @@ function buildPointsPreview() {
   if (logState.gym === true)  { pos += 10; rows += row('🏋️ Gym', '+10', 'pos'); }
   if (logState.gym === false) { rows += row('🏋️ No Gym', '0', 'neg'); }
 
-  if (logState.activity) {
-    const label = logState.activity === 'Other' ? (logState.activityOther.trim() || 'Other (pending)')
-                : logState.activity === 'Sports' ? (logState.sportsType || 'Sports')
-                : logState.activity === 'Running' ? 'Walk/Run'
-                : logState.activity;
-    const icon  = logState.activity === 'Sports' ? sportsIcon(logState.sportsType)
-                : activityIcon(logState.activity);
-    if (logState.activity !== 'Other') { pos += 3; rows += row(`${icon} ${label}`, '+3', 'pos'); }
-    else { rows += row(`🎯 ${label}`, '+3 (if approved)', 'pos'); }
+  if (logState.activity === 'Yes') {
+    pos += 5; rows += row('🏃 Activity', '+5', 'pos');
   }
 
   if (logState.protein != null) {
     const pp = proteinPts(logState.protein);
     if (pp > 0) { pos += pp; rows += row(`🥩 ${proteinLabel(logState.protein)}`, `+${pp}`, 'pos'); }
+    else if (pp < 0) { neg += Math.abs(pp); rows += row(`🥩 ${proteinLabel(logState.protein)}`, `${pp}`, 'neg'); }
     else { rows += row(`🥩 ${proteinLabel(logState.protein)}`, '0', 'neg'); }
   }
 
@@ -2320,8 +2336,7 @@ function buildPointsPreview() {
     neg += Math.abs(pts); rows += row(`${badIcon(b)} ${b}`, `${pts}`, 'neg');
   });
 
-  const goodDay = logState.gym === true && logState.activity && logState.activity !== 'Other'
-    && proteinGoodDay(logState.protein) && logState.badHabits.length === 0;
+  const goodDay = logState.gym === true && proteinGoodDay(logState.protein) && logState.badHabits.length === 0;
   if (goodDay) { pos += 4; rows += row('⭐ Good Day Bonus', '+4', 'bonus'); }
 
   if (!rows) return '';
@@ -2358,34 +2373,34 @@ function setSportsType(val) {
 
 function setActivity(val) {
   logState.activity = val;
-  if (val !== 'Other') logState.activityOther = '';
-  if (val !== 'Sports') logState.sportsType = '';
   document.getElementById('logFormArea').innerHTML = buildLogFormHTML();
-  if (val === 'Other') {
-    const inp = document.getElementById('otherActivityInput');
-    if (inp) inp.focus();
-  }
 }
 
 function proteinPts(val) {
-  if (val === true) return 2;   // legacy boolean (was 75g+ yes)
-  if (!val) return 0;
-  return val;                   // numeric tier: 0, 2, or 10
+  if (val === true)  return 3;   // legacy boolean → treat as 75–110g tier
+  if (val === false) return -5;  // legacy boolean → treat as 0–50g tier
+  if (val === null || val === undefined) return 0;
+  if (val === 2) return 3;       // legacy 75–110g
+  if (val === 10) return 5;      // legacy 110g+
+  return val;                    // new tiers: -5, 0, 3, 5
 }
 function proteinGoodDay(val) {
-  if (val === true) return true; // legacy: was 75g+
-  return typeof val === 'number' && val >= 2;
+  return proteinPts(val) >= 3;
 }
 function proteinLabel(val) {
-  if (val === 10) return '110g+';
-  if (val === 2)  return '75–110g';
-  if (val === 0)  return '0–75g';
-  return '75g+ Protein'; // legacy
+  const pts = proteinPts(val);
+  if (pts === 5)  return '110g+';
+  if (pts === 3)  return '75–110g';
+  if (pts === 0)  return '50–75g';
+  if (pts === -5) return '0–50g';
+  return 'Protein';
 }
 function proteinTag(val) {
-  if (val === 10)    return '<span class="tag" style="background:rgba(0,229,160,0.08);color:#7ee8c8;border:1px solid rgba(0,229,160,0.2);">🥩 110g+ 💪</span>';
-  if (val === 2)     return '<span class="tag" style="background:rgba(0,229,160,0.08);color:#7ee8c8;border:1px solid rgba(0,229,160,0.2);">🥩 75–110g</span>';
-  if (val === 0)     return '<span class="tag" style="background:rgba(248,81,73,0.08);color:var(--danger);border:1px solid rgba(248,81,73,0.2);">🥩 0–75g</span>';
+  const pts = proteinPts(val);
+  if (pts === 5)  return '<span class="tag" style="background:rgba(0,229,160,0.08);color:#7ee8c8;border:1px solid rgba(0,229,160,0.2);">🥩 110g+ 💪</span>';
+  if (pts === 3)  return '<span class="tag" style="background:rgba(0,229,160,0.08);color:#7ee8c8;border:1px solid rgba(0,229,160,0.2);">🥩 75–110g</span>';
+  if (pts === 0)  return '<span class="tag" style="background:rgba(255,200,0,0.08);color:#b8860b;border:1px solid rgba(255,200,0,0.2);">🥩 50–75g</span>';
+  if (pts === -5) return '<span class="tag" style="background:rgba(248,81,73,0.08);color:var(--danger);border:1px solid rgba(248,81,73,0.2);">🥩 0–50g −5</span>';
   if (val === true)  return '<span class="tag" style="background:rgba(0,229,160,0.08);color:#7ee8c8;border:1px solid rgba(0,229,160,0.2);">🥩 Protein ✓</span>';
   if (val === false) return '<span class="tag" style="background:rgba(248,81,73,0.08);color:var(--danger);border:1px solid rgba(248,81,73,0.2);">🥩 Low Protein</span>';
   return '';
@@ -2419,8 +2434,6 @@ function editLog() {
   logState = {
     gym: existing.gym,
     activity: existing.activity || null,
-    activityOther: existing.activityOther || '',
-    sportsType: existing.sportsType || '',
     badHabits: [...(existing.badHabits || [])],
     protein: existing.protein ?? null,
   };
@@ -2434,19 +2447,12 @@ function submitLog() {
   log[logDate] = {
     gym: logState.gym,
     activity: logState.activity,
-    activityOther: logState.activity === 'Other' ? logState.activityOther.trim() : '',
-    sportsType: logState.activity === 'Sports' ? logState.sportsType : '',
     protein: logState.protein,
     badHabits: [...logState.badHabits],
   };
-  if (logState.activity === 'Other') {
-    createApprovalRequest(currentUser, logDate, logState.activityOther.trim());
-    showToast('Logged! Waiting for bros to approve "Other" activity ⏳', 'success');
-  } else {
-    saveData();
-    const result = calcDayScore(log[logDate], currentUser, logDate);
-    showToast(`Logged! ${result.score > 0 ? '+' : ''}${result.score} pts 💪`, 'success');
-  }
+  saveData();
+  const result = calcDayScore(log[logDate], currentUser, logDate);
+  showToast(`Logged! ${result.score > 0 ? '+' : ''}${result.score} pts 💪`, 'success');
   renderLogForm();
   renderDashboard();
 }
@@ -3077,6 +3083,390 @@ function renderStudyWeeks() {
         </div>
       </div>`;
   }).join('');
+}
+
+// ── PR BOOK ──
+
+const PR_BODY_PARTS = [
+  { id: 'chest',        label: 'Chest',          color: '#ef4444', bg: '#fef2f2',
+    svg: `<svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><ellipse cx="14" cy="22" rx="9" ry="7" fill="#ef4444" opacity="0.9"/><ellipse cx="34" cy="22" rx="9" ry="7" fill="#ef4444" opacity="0.9"/><rect x="21" y="19" width="6" height="6" rx="3" fill="#ef4444"/><path d="M14 15 Q24 10 34 15" stroke="#ef4444" stroke-width="2" fill="none" opacity="0.5"/></svg>` },
+  { id: 'back',         label: 'Back',            color: '#3b82f6', bg: '#eff6ff',
+    svg: `<svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M10 14 Q24 8 38 14 L36 36 Q24 40 12 36 Z" fill="#3b82f6" opacity="0.85"/><path d="M24 14 L24 36" stroke="#fff" stroke-width="1.5" opacity="0.6"/><path d="M14 20 Q24 18 34 20" stroke="#fff" stroke-width="1.2" fill="none" opacity="0.5"/><path d="M13 27 Q24 25 35 27" stroke="#fff" stroke-width="1.2" fill="none" opacity="0.5"/></svg>` },
+  { id: 'legs',         label: 'Legs',            color: '#f59e0b', bg: '#fffbeb',
+    svg: `<svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="9" y="10" width="12" height="28" rx="6" fill="#f59e0b" opacity="0.9"/><rect x="27" y="10" width="12" height="28" rx="6" fill="#f59e0b" opacity="0.9"/><rect x="10" y="10" width="10" height="14" rx="5" fill="#f59e0b"/><rect x="28" y="10" width="10" height="14" rx="5" fill="#f59e0b"/></svg>` },
+  { id: 'shoulders',    label: 'Shoulders',       color: '#8b5cf6', bg: '#f5f3ff',
+    svg: `<svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="9" cy="20" r="8" fill="#8b5cf6" opacity="0.9"/><circle cx="39" cy="20" r="8" fill="#8b5cf6" opacity="0.9"/><circle cx="24" cy="18" r="6" fill="#8b5cf6" opacity="0.5"/><rect x="15" y="16" width="18" height="6" rx="3" fill="#8b5cf6" opacity="0.4"/></svg>` },
+  { id: 'arms',         label: 'Arms',            color: '#06b6d4', bg: '#ecfeff',
+    svg: `<svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 12 Q6 24 10 36" stroke="#06b6d4" stroke-width="8" stroke-linecap="round"/><path d="M40 12 Q42 24 38 36" stroke="#06b6d4" stroke-width="8" stroke-linecap="round"/><ellipse cx="11" cy="22" rx="5" ry="7" fill="#06b6d4"/><ellipse cx="37" cy="22" rx="5" ry="7" fill="#06b6d4"/></svg>` },
+  { id: 'core_cardio',  label: 'Core & Cardio',   color: '#10b981', bg: '#ecfdf5',
+    svg: `<svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="14" y="8" width="9" height="9" rx="2" fill="#10b981" opacity="0.9"/><rect x="25" y="8" width="9" height="9" rx="2" fill="#10b981" opacity="0.9"/><rect x="14" y="19" width="9" height="9" rx="2" fill="#10b981" opacity="0.9"/><rect x="25" y="19" width="9" height="9" rx="2" fill="#10b981" opacity="0.9"/><circle cx="32" cy="37" r="4" fill="#ec4899" opacity="0.85"/><path d="M20 34 Q24 30 28 34" stroke="#ec4899" stroke-width="2" fill="none"/><path d="M16 38 L20 34 L24 36" stroke="#ec4899" stroke-width="1.8" stroke-linecap="round" fill="none"/></svg>` },
+  { id: 'others',       label: 'Others',          color: '#6b7280', bg: '#f9fafb',
+    svg: `<svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="24" cy="8" r="5" fill="#6b7280"/><rect x="18" y="14" width="12" height="14" rx="4" fill="#6b7280" opacity="0.8"/><path d="M18 16 L8 22 M30 16 L40 22" stroke="#6b7280" stroke-width="3" stroke-linecap="round"/><rect x="19" y="28" width="5" height="13" rx="2.5" fill="#6b7280" opacity="0.8"/><rect x="24" y="28" width="5" height="13" rx="2.5" fill="#6b7280" opacity="0.8"/></svg>` },
+];
+
+const PR_DEFAULTS = [
+  // Chest
+  // Chest
+  { name: 'Flat Bench Press',       unit: 'kg',   bodyPart: 'chest'       },
+  { name: 'Push-ups',               unit: 'reps', bodyPart: 'chest'       },
+  // Back
+  { name: 'Regular Deadlift',       unit: 'kg',   bodyPart: 'back'        },
+  { name: 'Pull-ups',               unit: 'reps', bodyPart: 'back'        },
+  // Legs
+  { name: 'Barbell Squats',         unit: 'kg',   bodyPart: 'legs'        },
+  { name: 'Leg Press',              unit: 'kg',   bodyPart: 'legs'        },
+  // Shoulders
+  { name: 'Shoulder Press',         unit: 'kg',   bodyPart: 'shoulders'   },
+  { name: 'Lateral Raise',          unit: 'kg',   bodyPart: 'shoulders'   },
+  // Arms
+  { name: 'Bicep Curl',             unit: 'kg',   bodyPart: 'arms'        },
+  { name: 'Tricep Rope Pushdown',   unit: 'kg',   bodyPart: 'arms'        },
+  // Core & Cardio
+  { name: 'Plank',                  unit: 'sec',  bodyPart: 'core_cardio' },
+  { name: 'Running 5K',             unit: 'min',  bodyPart: 'core_cardio' },
+];
+
+function getPRBook() {
+  if (!appData._prBook) appData._prBook = {};
+  PR_DEFAULTS.forEach(e => {
+    if (!appData._prBook[e.name]) appData._prBook[e.name] = { unit: e.unit, bodyPart: e.bodyPart, logs: [] };
+    if (!appData._prBook[e.name].bodyPart) appData._prBook[e.name].bodyPart = e.bodyPart;
+  });
+  const migrate = { core: 'core_cardio', cardio: 'core_cardio', fullbody: 'others' };
+  Object.keys(appData._prBook).forEach(k => {
+    if (!Array.isArray(appData._prBook[k].logs)) appData._prBook[k].logs = [];
+    const bp = appData._prBook[k].bodyPart;
+    if (!bp || migrate[bp]) appData._prBook[k].bodyPart = migrate[bp] || 'others';
+  });
+  return appData._prBook;
+}
+
+function prExerciseList() {
+  return Object.keys(getPRBook());
+}
+
+function getUserBestPR(exercise, username) {
+  const logs = getPRBook()[exercise]?.logs || [];
+  const userLogs = logs.filter(l => l.username === username);
+  if (!userLogs.length) return null;
+  const unit = getPRBook()[exercise].unit;
+  const timeBased = unit === 'min' || unit === 'sec';
+  return userLogs.reduce((best, l) =>
+    timeBased ? (l.value < best.value ? l : best) : (l.value > best.value ? l : best)
+  );
+}
+
+function getBodyPartMeta(id) {
+  return PR_BODY_PARTS.find(b => b.id === id) || PR_BODY_PARTS.find(b => b.id === 'fullbody');
+}
+
+let prState = { logForm: null, showAdd: false, search: '', bodyFilter: 'all', expandedCard: null, historyOpen: {}, newUnitType: 'weight', newTimeUnit: 'sec', newName: '' };
+
+function renderPRBook() {
+  const el = document.getElementById('prbookArea');
+  if (!el) return;
+  const book = getPRBook();
+
+  let exercises = prExerciseList();
+  if (prState.search) {
+    const q = prState.search.toLowerCase();
+    exercises = exercises.filter(n => n.toLowerCase().includes(q));
+  }
+  if (prState.bodyFilter && prState.bodyFilter !== 'all') {
+    exercises = exercises.filter(n => book[n].bodyPart === prState.bodyFilter);
+  }
+
+  const filterChips = [{ id: 'all', label: 'All', color: '#374151', bg: '#f3f4f6' }, ...PR_BODY_PARTS].map(item => {
+    const active = prState.bodyFilter === item.id;
+    return `<button onclick="prState.bodyFilter='${item.id}';renderPRBook();"
+      style="flex-shrink:0;padding:6px 12px;border-radius:20px;border:none;font-size:12px;font-weight:700;cursor:pointer;
+        background:${active ? item.color : item.bg};color:${active ? '#fff' : item.color};">
+      ${item.label}
+    </button>`;
+  }).join('');
+
+  const addFormHTML = prState.showAdd ? `
+    <div style="background:var(--surface);border-radius:16px;padding:18px;border:2px solid var(--accent3);margin-bottom:12px;">
+      <div style="font-size:14px;font-weight:800;color:var(--text);margin-bottom:14px;">➕ New Exercise</div>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div style="position:relative;">
+          <input id="prNewName" type="text" placeholder="Exercise name (e.g. Bicep Curl)"
+            value="${prState.newName}"
+            oninput="prState.newName=this.value;renderPRBook();document.getElementById('prNewName').focus();"
+            autocomplete="off"
+            style="background:var(--bg);border:1.5px solid var(--border);border-radius:10px;padding:10px 14px;color:var(--text);font-size:14px;outline:none;width:100%;box-sizing:border-box;" />
+          ${(() => {
+            if (!prState.newName.trim()) return '';
+            const q = prState.newName.trim().toLowerCase();
+            const matches = prExerciseList().filter(n => n.toLowerCase().includes(q));
+            if (!matches.length) return '';
+            return `<div style="position:absolute;top:100%;left:0;right:0;background:var(--surface);border:1.5px solid var(--border);border-radius:10px;margin-top:4px;overflow:hidden;z-index:10;box-shadow:0 4px 16px #0001;">
+              ${matches.map(n => {
+                const isDupe = n.toLowerCase() === q;
+                return `<div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--border);background:${isDupe ? '#fef2f2' : 'var(--surface)'};">
+                  <span style="font-size:13px;font-weight:600;color:${isDupe ? '#ef4444' : 'var(--text)'};">${n}</span>
+                  ${isDupe ? `<span style="font-size:11px;font-weight:700;color:#ef4444;background:#fecaca;padding:2px 8px;border-radius:20px;">Already exists</span>` : ''}
+                </div>`;
+              }).join('')}
+            </div>`;
+          })()}
+        </div>
+        <div style="font-size:12px;font-weight:700;color:var(--muted);margin-bottom:2px;">Measured by</div>
+        <div style="display:flex;gap:8px;">
+          ${[{t:'weight',label:'⚖️ Weight',hint:'kg'},{t:'time',label:'⏱ Time',hint:'sec/min'},{t:'count',label:'🔢 Count',hint:'reps'}].map(o=>`
+            <button onclick="prState.newUnitType='${o.t}';renderPRBook();"
+              style="flex:1;padding:9px 4px;border-radius:10px;border:2px solid ${prState.newUnitType===o.t?'var(--accent3)':'var(--border)'};
+                background:${prState.newUnitType===o.t?'#f5f3ff':'var(--bg)'};color:${prState.newUnitType===o.t?'var(--accent3)':'var(--muted)'};
+                font-size:12px;font-weight:700;cursor:pointer;text-align:center;line-height:1.4;">
+              ${o.label}<br><span style="font-size:10px;font-weight:400;">${o.hint}</span>
+            </button>`).join('')}
+        </div>
+        ${prState.newUnitType==='time' ? `
+        <div style="display:flex;gap:8px;margin-top:-2px;">
+          ${[{u:'sec',label:'Seconds'},{u:'min',label:'Minutes'}].map(o=>`
+            <button onclick="prState.newTimeUnit='${o.u}';renderPRBook();"
+              style="flex:1;padding:7px;border-radius:8px;border:1.5px solid ${prState.newTimeUnit===o.u?'var(--accent3)':'var(--border)'};
+                background:${prState.newTimeUnit===o.u?'#f5f3ff':'var(--bg)'};color:${prState.newTimeUnit===o.u?'var(--accent3)':'var(--muted)'};
+                font-size:12px;font-weight:600;cursor:pointer;">
+              ${o.label}
+            </button>`).join('')}
+        </div>` : ''}
+        <input type="hidden" id="prNewUnit" value="${prState.newUnitType==='weight'?'kg':prState.newUnitType==='count'?'reps':prState.newTimeUnit}" />
+        <div style="font-size:12px;font-weight:700;color:var(--muted);margin-bottom:2px;margin-top:2px;">Which body part?</div>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;">
+          ${PR_BODY_PARTS.map(b => `
+            <label style="cursor:pointer;">
+              <input type="radio" name="prNewBodyPart" value="${b.id}" ${b.id === 'chest' ? 'checked' : ''} style="display:none;"
+                onchange="document.querySelectorAll('.bp-btn').forEach(el=>el.style.background=el.dataset.bg);document.querySelectorAll('.bp-btn').forEach(el=>el.style.color=el.dataset.color);this.parentElement.querySelector('.bp-btn').style.background=this.parentElement.querySelector('.bp-btn').dataset.color;this.parentElement.querySelector('.bp-btn').style.color='#fff';" />
+              <div class="bp-btn" data-color="${b.color}" data-bg="${b.bg}"
+                style="padding:6px 10px;border-radius:20px;font-size:12px;font-weight:700;background:${b.bg};color:${b.color};border:none;transition:all 0.15s;">
+                ${b.label}
+              </div>
+            </label>`).join('')}
+        </div>
+        <div style="display:flex;gap:8px;margin-top:4px;">
+          <button onclick="submitNewExercise()"
+            style="flex:1;background:var(--accent3);border:none;border-radius:10px;padding:11px;font-weight:700;color:#fff;cursor:pointer;font-size:14px;">Add Exercise</button>
+          <button onclick="prState.showAdd=false;prState.newName='';renderPRBook();"
+            style="flex:1;background:var(--bg);border:1.5px solid var(--border);border-radius:10px;padding:11px;font-weight:600;color:var(--muted);cursor:pointer;font-size:14px;">Cancel</button>
+        </div>
+      </div>
+    </div>` : '';
+
+  const cardsHTML = exercises.length === 0
+    ? `<div style="text-align:center;padding:40px 20px;color:var(--muted);font-size:14px;">No exercises found</div>`
+    : `<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        ${exercises.map(name => {
+          const ex = book[name];
+          const timeBased = ex.unit === 'min' || ex.unit === 'sec';
+          const isExpanded = prState.expandedCard === name;
+          const isLogOpen = prState.logForm === name;
+          const bp = getBodyPartMeta(ex.bodyPart);
+
+          // Find leader PR
+          let leader = null, leaderUser = null;
+          USERS.forEach(u => {
+            const best = getUserBestPR(name, u.username);
+            if (best) {
+              if (!leader) { leader = best; leaderUser = u; }
+              else {
+                const better = timeBased ? best.value < leader.value : best.value > leader.value;
+                if (better) { leader = best; leaderUser = u; }
+              }
+            }
+          });
+
+          const myBest = getUserBestPR(name, currentUser);
+
+          const expandedHTML = isExpanded ? `
+            <div style="margin-top:10px;border-top:1px solid var(--border);padding-top:10px;">
+              ${USERS.map(u => {
+                const best = getUserBestPR(name, u.username);
+                const allLogs = (ex.logs || []).filter(l => l.username === u.username)
+                  .sort((a, b) => b.date.localeCompare(a.date));
+                const histKey = name + '__' + u.username;
+                const histOpen = prState.historyOpen[histKey];
+                const histHTML = histOpen && allLogs.length > 0 ? `
+                  <div style="margin:4px 0 6px 28px;background:var(--bg);border-radius:8px;padding:6px 8px;">
+                    ${allLogs.map((l, i) => `
+                      <div style="display:flex;align-items:center;gap:6px;padding:3px 0;${i < allLogs.length-1 ? 'border-bottom:1px solid var(--border);' : ''}">
+                        <div style="font-size:12px;font-weight:800;color:${bp.color};min-width:44px;">${l.value} <span style="font-size:10px;font-weight:400;color:var(--muted);">${ex.unit}</span></div>
+                        <div style="font-size:10px;color:var(--muted);flex:1;">${l.date}</div>
+                        ${l.note ? `<div style="font-size:10px;color:var(--muted);font-style:italic;max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${l.note}</div>` : ''}
+                      </div>`).join('')}
+                  </div>` : '';
+                return `
+                  <div style="padding:4px 0;">
+                    <div style="display:flex;align-items:center;gap:6px;${allLogs.length > 0 ? 'cursor:pointer;' : ''}"
+                      onclick="${allLogs.length > 0 ? `prState.historyOpen['${histKey}']=!prState.historyOpen['${histKey}'];renderPRBook();` : ''}">
+                      <div style="width:22px;height:22px;border-radius:50%;background:${u.color};display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;flex-shrink:0;">${getInitial(u.username)}</div>
+                      <div style="flex:1;font-size:12px;font-weight:600;color:var(--text);">${u.username}</div>
+                      ${best
+                        ? `<div style="font-size:13px;font-weight:800;color:${bp.color};">${best.value}<span style="font-size:10px;color:var(--muted);font-weight:400;"> ${ex.unit}</span></div>
+                           ${allLogs.length > 1 ? `<div style="font-size:10px;color:var(--muted);margin-left:2px;">${histOpen ? '▲' : '▼'} ${allLogs.length}</div>` : ''}`
+                        : `<div style="font-size:11px;color:var(--muted);font-style:italic;">—</div>`}
+                    </div>
+                    ${histHTML}
+                  </div>`;
+              }).join('')}
+              ${isLogOpen ? `
+                <div style="margin-top:10px;background:var(--bg);border-radius:10px;padding:10px;border:1.5px solid ${bp.color}20;">
+                  <div style="font-size:11px;color:var(--muted);margin-bottom:6px;">
+                    ${myBest ? `Your best: <strong style="color:${bp.color}">${myBest.value} ${ex.unit}</strong>` : 'No PR yet'}
+                    ${timeBased ? ' · lower is better' : ''}
+                  </div>
+                  <input id="prValueInput" type="number" step="0.1" min="0" placeholder="${ex.unit}" inputmode="decimal"
+                    style="width:100%;box-sizing:border-box;background:var(--surface);border:1.5px solid ${bp.color};border-radius:8px;padding:8px 10px;color:var(--text);font-size:16px;font-weight:800;outline:none;margin-bottom:6px;" />
+                  <input id="prNoteInput" type="text" placeholder="Note (optional)"
+                    style="width:100%;box-sizing:border-box;background:var(--surface);border:1.5px solid var(--border);border-radius:8px;padding:8px 10px;color:var(--text);font-size:13px;outline:none;margin-bottom:8px;" />
+                  <div style="display:flex;gap:6px;">
+                    <button onclick="submitPR('${name}')"
+                      style="flex:1;background:${bp.color};border:none;border-radius:8px;padding:9px;font-weight:700;color:#fff;cursor:pointer;font-size:13px;">🏆 Save PR</button>
+                    <button onclick="prState.logForm=null;renderPRBook();"
+                      style="flex:1;background:var(--surface);border:1.5px solid var(--border);border-radius:8px;padding:9px;font-weight:600;color:var(--muted);cursor:pointer;font-size:12px;">Cancel</button>
+                  </div>
+                </div>` : `
+                <button onclick="prState.logForm='${name}';renderPRBook();"
+                  style="width:100%;margin-top:8px;background:${bp.color};border:none;border-radius:8px;padding:9px;font-weight:700;color:#fff;cursor:pointer;font-size:13px;">+ Log PR</button>`}
+            </div>` : '';
+
+          return `<div onclick="if(event.target.tagName!=='BUTTON'&&event.target.tagName!=='INPUT'){prState.expandedCard=prState.expandedCard==='${name}'?null:'${name}';if(prState.expandedCard!=='${name}')prState.logForm=null;renderPRBook();}"
+            style="background:var(--surface);border-radius:16px;padding:14px;cursor:pointer;border:2px solid ${isExpanded ? bp.color+'40' : 'transparent'};transition:border 0.15s;">
+            <div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:10px;">
+              <div style="width:44px;height:44px;border-radius:12px;background:${bp.bg};flex-shrink:0;display:flex;align-items:center;justify-content:center;overflow:hidden;padding:4px;box-sizing:border-box;">
+                ${bp.svg}
+              </div>
+              <div style="flex:1;min-width:0;">
+                <div style="font-size:13px;font-weight:800;color:var(--text);line-height:1.2;margin-bottom:2px;">${name}</div>
+                <div style="display:inline-block;padding:2px 7px;border-radius:10px;font-size:10px;font-weight:700;background:${bp.bg};color:${bp.color};">${bp.label}</div>
+              </div>
+            </div>
+            ${leader
+              ? `<div style="background:${bp.bg};border-radius:10px;padding:8px 10px;">
+                  <div style="font-size:10px;font-weight:600;color:${bp.color};margin-bottom:4px;">🏆 BEST</div>
+                  <div style="display:flex;align-items:center;gap:6px;">
+                    <div style="width:20px;height:20px;border-radius:50%;background:${leaderUser.color};display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:#fff;">${getInitial(leaderUser.username)}</div>
+                    <div style="font-size:18px;font-weight:900;color:${bp.color};line-height:1;">${leader.value}</div>
+                    <div style="font-size:11px;color:var(--muted);font-weight:500;">${ex.unit}</div>
+                  </div>
+                </div>`
+              : `<div style="background:var(--bg);border-radius:10px;padding:8px 10px;text-align:center;font-size:11px;color:var(--muted);font-style:italic;">No PRs yet</div>`}
+            ${expandedHTML}
+          </div>`;
+        }).join('')}
+      </div>`;
+
+  // PR leaderboard — only exercises where all 3 have logged a PR
+  const allExercises = prExerciseList();
+  const contested = allExercises.filter(name =>
+    USERS.every(u => getUserBestPR(name, u.username) !== null)
+  );
+  const wins = {};
+  USERS.forEach(u => wins[u.username] = 0);
+  contested.forEach(name => {
+    const ex = book[name];
+    const timeBased = ex.unit === 'min' || ex.unit === 'sec';
+    let best = null, bestUser = null;
+    USERS.forEach(u => {
+      const pr = getUserBestPR(name, u.username);
+      if (!pr) return;
+      const better = !best || (timeBased ? pr.value < best.value : pr.value > best.value);
+      if (better) { best = pr; bestUser = u.username; }
+    });
+    if (bestUser) wins[bestUser]++;
+  });
+  const ranked = USERS.map(u => ({ ...u, wins: wins[u.username] }))
+    .sort((a, b) => b.wins - a.wins);
+  const medals = ['🥇', '🥈', '🥉'];
+  const podiumHTML = contested.length === 0
+    ? `<div style="text-align:center;padding:14px;font-size:12px;color:var(--muted);">Leaderboard unlocks once all 3 bros log a PR for the same exercise</div>`
+    : `<div style="display:flex;gap:8px;">
+        ${ranked.map((u, i) => `
+          <div style="flex:1;background:${u.color}18;border-radius:14px;padding:12px 8px;text-align:center;border:2px solid ${i===0?u.color+'55':'transparent'};">
+            <div style="font-size:20px;margin-bottom:4px;">${medals[i] || ''}</div>
+            <div style="width:36px;height:36px;border-radius:50%;background:${u.color};display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:800;color:#fff;margin:0 auto 6px;">${getInitial(u.username)}</div>
+            <div style="font-size:12px;font-weight:700;color:var(--text);">${u.username}</div>
+            <div style="font-size:20px;font-weight:900;color:${u.color};line-height:1.2;">${u.wins}</div>
+            <div style="font-size:10px;color:var(--muted);">PR${u.wins !== 1 ? 's' : ''} won</div>
+          </div>`).join('')}
+      </div>
+      <div style="font-size:10px;color:var(--muted);margin-top:6px;text-align:center;">Based on ${contested.length} exercise${contested.length!==1?'s':''} where all 3 bros have logged a PR</div>`;
+
+  const leaderboardHTML = `
+    <div style="background:var(--surface);border-radius:16px;padding:14px;margin-bottom:14px;">
+      <div style="font-size:12px;font-weight:800;color:var(--muted);letter-spacing:0.5px;margin-bottom:10px;">🏆 PR LEADERBOARD</div>
+      ${podiumHTML}
+    </div>`;
+
+  el.innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+      <div>
+        <div style="font-size:18px;font-weight:900;color:var(--text);">💪 PR Book</div>
+        <div style="font-size:11px;color:var(--muted);">Beat your best to log a new PR</div>
+        <div style="font-size:11px;color:var(--accent3);margin-top:2px;font-weight:600;">PR = max weight you can lift for min 4 reps</div>
+      </div>
+      <button onclick="prState.showAdd=!prState.showAdd;renderPRBook();"
+        style="background:${prState.showAdd ? 'var(--border)' : 'var(--accent3)'};border:none;border-radius:10px;padding:8px 14px;font-weight:700;color:${prState.showAdd ? 'var(--muted)' : '#fff'};cursor:pointer;font-size:13px;">
+        ${prState.showAdd ? '✕ Cancel' : '➕ Add'}
+      </button>
+    </div>
+    ${leaderboardHTML}
+    ${addFormHTML}
+    <div style="position:relative;margin-bottom:12px;">
+      <input type="text" placeholder="🔍  Search exercises..." value="${prState.search}"
+        oninput="prState.search=this.value;renderPRBook();"
+        style="width:100%;box-sizing:border-box;background:var(--surface);border:1.5px solid var(--border);border-radius:12px;padding:10px 14px;color:var(--text);font-size:14px;outline:none;" />
+    </div>
+    <div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:8px;margin-bottom:12px;scrollbar-width:none;">
+      ${filterChips}
+    </div>
+    ${cardsHTML}`;
+}
+
+function submitPR(exercise) {
+  const valRaw = document.getElementById('prValueInput')?.value?.trim();
+  const note   = document.getElementById('prNoteInput')?.value?.trim() || '';
+  if (!valRaw) { showToast('Enter a value', 'error'); return; }
+  const value = parseFloat(valRaw);
+  if (isNaN(value) || value <= 0) { showToast('Invalid value', 'error'); return; }
+
+  const ex = getPRBook()[exercise];
+  const timeBased = ex.unit === 'min' || ex.unit === 'sec';
+  const myBest = getUserBestPR(exercise, currentUser);
+
+  if (myBest) {
+    const beats = timeBased ? value < myBest.value : value > myBest.value;
+    if (!beats) {
+      showToast(`Doesn't beat your PR of ${myBest.value} ${ex.unit} 💪`, 'error');
+      return;
+    }
+  }
+
+  ex.logs.push({ username: currentUser, value, date: localDateStr(new Date()), note });
+  saveData();
+  prState.logForm = null;
+  renderPRBook();
+  showToast(`New PR! ${value} ${ex.unit} 🏆`, 'success');
+}
+
+function submitNewExercise() {
+  const name = (document.getElementById('prNewName')?.value || prState.newName)?.trim();
+  const unit = document.getElementById('prNewUnit')?.value;
+  const bodyPartEl = document.querySelector('input[name="prNewBodyPart"]:checked');
+  const bodyPart = bodyPartEl ? bodyPartEl.value : 'fullbody';
+  if (!name) { showToast('Enter an exercise name', 'error'); return; }
+
+  const existing = prExerciseList().map(e => e.toLowerCase());
+  if (existing.includes(name.toLowerCase())) {
+    showToast('Exercise already exists', 'error'); return;
+  }
+
+  getPRBook()[name] = { unit, bodyPart, logs: [] };
+  saveData();
+  prState.showAdd = false;
+  prState.newName = '';
+  renderPRBook();
+  showToast(`"${name}" added! 💪`, 'success');
 }
 
 // ── TOAST ──
