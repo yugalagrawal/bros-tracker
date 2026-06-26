@@ -2201,7 +2201,7 @@ function renderLeaderboard() {
             : `<span style="border-radius:3px;width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center;background:var(--border);opacity:0.4;"></span>`
           ).join('')}
         </div>
-        ${u.goodDayStreak > 0 ? `<div style="margin-top:4px;"><span style="font-size:11px;background:rgba(124,111,255,0.12);color:#7c6fff;border:1px solid rgba(124,111,255,0.3);border-radius:20px;padding:2px 8px;font-weight:600;">⭐ ${u.goodDayStreak}-day good day streak</span></div>` : ''}
+        ${u.goodDayStreak > 0 ? `<div style="margin-top:4px;"><span style="font-size:11px;background:rgba(124,111,255,0.12);color:#7c6fff;border:1px solid rgba(124,111,255,0.3);border-radius:20px;padding:2px 8px;font-weight:600;">⭐ ${u.goodDayStreak}d</span></div>` : ''}
       </div>
       <div class="lb-score">${u.total}<br><span class="pts">pts</span></div>
     </div>
