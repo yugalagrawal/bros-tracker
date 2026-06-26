@@ -1692,8 +1692,7 @@ function getTotalScore(username) {
 }
 
 function getCurrentStreak(username) {
-  const raw = calcGymStreak(username, yesterdayStr()).streak;
-  return yesterdayStr() >= '2026-06-29' ? raw - Math.floor(raw / 7) : raw;
+  return calcGymStreak(username, yesterdayStr()).streak;
 }
 
 function getGoodDayStreak(username) {
@@ -2166,8 +2165,7 @@ function renderApprovals() {
 
 function renderLeaderboard() {
   const scores = USERS.map(u => {
-    const { streak: rawStreak, streakStartDate } = calcGymStreak(u.username, yesterdayStr());
-    const streak = yesterdayStr() >= '2026-06-29' ? rawStreak - Math.floor(rawStreak / 7) : rawStreak;
+    const { streak, streakStartDate } = calcGymStreak(u.username, yesterdayStr());
     const log = getUserLog(u.username);
     const streakDates = getDateRange(streakStartDate, yesterdayStr()).slice(-7);
     const last7 = streakDates.map(d => log[d] ? (log[d].gym ? 'gym' : 'miss') : 'empty');
