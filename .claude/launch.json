@@ -1,10 +1,11 @@
 {
   "version": "0.0.1",
+  "autoPort": true,
   "configurations": [
     {
       "name": "bros-tracker",
       "runtimeExecutable": "npx",
-      "runtimeArgs": ["serve", "-p", "4200", "."],
+      "runtimeArgs": ["serve", "."],
       "port": 4200
     }
   ]

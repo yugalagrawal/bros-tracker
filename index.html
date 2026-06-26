@@ -1639,7 +1639,14 @@ function _calcDayScoreLegacy(entry, username, dateStr) {
 function _calcDayScoreNew(entry, username, dateStr) {
   let pos = 0, neg = 0, notes = [];
 
-  if (entry.gym) { pos += 10; notes.push({ label: 'Gym', pts: 10 }); }
+  if (entry.gym) {
+    const isRestDay = dateStr >= '2026-06-29' && gymStreakOnDay(username, dateStr) % 7 === 0;
+    if (!isRestDay) {
+      pos += 10; notes.push({ label: 'Gym', pts: 10 });
+    } else {
+      notes.push({ label: 'Gym (rest day — no pts)', pts: 0 });
+    }
+  }
 
   if (entry.activity === 'Yes') { pos += 5; notes.push({ label: 'Activity', pts: 5 }); }
 
@@ -2162,7 +2169,8 @@ function renderLeaderboard() {
     const log = getUserLog(u.username);
     const streakDates = getDateRange(streakStartDate, yesterdayStr()).slice(-7);
     const last7 = streakDates.map(d => log[d] ? (log[d].gym ? 'gym' : 'miss') : 'empty');
-    return { ...u, total: getTotalScore(u.username), streak, logged: getLoggedDays(u.username), last7 };
+    const goodDayStreak = getGoodDayStreak(u.username);
+    return { ...u, total: getTotalScore(u.username), streak, logged: getLoggedDays(u.username), last7, goodDayStreak };
   }).sort((a, b) => b.total - a.total);
 
   // Dense ranking: same score = same medal, next unique score = next medal
@@ -2192,6 +2200,7 @@ function renderLeaderboard() {
             ? `<span style="font-size:11px;background:rgba(248,81,73,0.1);color:var(--danger);border:1px solid rgba(248,81,73,0.25);border-radius:3px;width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center;font-weight:700;">✗</span>`
             : `<span style="border-radius:3px;width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center;background:var(--border);opacity:0.4;"></span>`
           ).join('')}
+          ${u.goodDayStreak > 0 ? `<span style="font-size:11px;background:rgba(124,111,255,0.12);color:#7c6fff;border:1px solid rgba(124,111,255,0.3);border-radius:20px;padding:0 7px;height:18px;display:inline-flex;align-items:center;font-weight:600;margin-left:4px;">⭐ ${u.goodDayStreak}d</span>` : ''}
         </div>
       </div>
       <div class="lb-score">${u.total}<br><span class="pts">pts</span></div>
@@ -3527,14 +3536,134 @@ function renderPRBook() {
     </div>
     ${addFormHTML}
     <div style="position:relative;margin-bottom:12px;">
-      <input type="text" placeholder="🔍  Search exercises..." value="${prState.search}"
-        oninput="prState.search=this.value;renderPRBook();"
+      <input type="text" id="prSearchInput" placeholder="🔍  Search exercises..." value="${prState.search}"
+        oninput="prState.search=this.value;renderPRBookCards();"
         style="width:100%;box-sizing:border-box;background:var(--surface);border:1.5px solid var(--border);border-radius:12px;padding:10px 14px;color:var(--text);font-size:14px;outline:none;" />
     </div>
     <div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:8px;margin-bottom:12px;scrollbar-width:none;">
       ${filterChips}
     </div>
-    ${cardsHTML}`;
+    <div id="prCardsContainer">${cardsHTML}</div>`;
+}
+
+function renderPRBookCards() {
+  const book = getPRBook();
+  let exercises = prExerciseList();
+  if (prState.search) {
+    const q = prState.search.toLowerCase();
+    exercises = exercises.filter(n => n.toLowerCase().includes(q));
+  }
+  if (prState.bodyFilter && prState.bodyFilter !== 'all') {
+    exercises = exercises.filter(n => book[n].bodyPart === prState.bodyFilter);
+  }
+
+  const cardsContainer = document.getElementById('prCardsContainer');
+  if (!cardsContainer) { renderPRBook(); return; }
+
+  if (exercises.length === 0) {
+    cardsContainer.innerHTML = `<div style="text-align:center;padding:40px 20px;color:var(--muted);font-size:14px;">No exercises found</div>`;
+    return;
+  }
+
+  cardsContainer.innerHTML = `<div style="display:flex;flex-direction:column;gap:6px;">
+    ${exercises.map(name => {
+      const ex = book[name];
+      const timeBased = ex.unit === 'min' || ex.unit === 'sec';
+      const isExpanded = prState.expandedCard === name;
+      const isLogOpen = prState.logForm === name;
+      const bp = getBodyPartMeta(ex.bodyPart);
+
+      let leader = null, leaderUser = null;
+      USERS.forEach(u => {
+        const best = getUserBestPR(name, u.username);
+        if (best) {
+          if (!leader) { leader = best; leaderUser = u; }
+          else {
+            const better = timeBased ? best.value < leader.value : best.value > leader.value;
+            if (better) { leader = best; leaderUser = u; }
+          }
+        }
+      });
+
+      const myBest = getUserBestPR(name, currentUser);
+
+      const expandedHTML = isExpanded ? `
+        <div style="padding:10px 12px 12px;border-top:1px solid var(--border);">
+          <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:10px;">
+            ${USERS.map(u => {
+              const best = getUserBestPR(name, u.username);
+              const allLogs = (ex.logs || []).filter(l => l.username === u.username)
+                .sort((a, b) => b.date.localeCompare(a.date));
+              const histKey = name + '__' + u.username;
+              const histOpen = prState.historyOpen[histKey];
+              const histHTML = histOpen && allLogs.length > 0 ? `
+                <div style="margin:4px 0 4px 30px;background:var(--bg);border-radius:8px;padding:6px 8px;">
+                  ${allLogs.map((l, i) => `
+                    <div style="display:flex;align-items:center;gap:6px;padding:3px 0;${i < allLogs.length-1 ? 'border-bottom:1px solid var(--border);' : ''}">
+                      <div style="font-size:12px;font-weight:800;color:${bp.color};min-width:44px;">${l.value} <span style="font-size:10px;font-weight:400;color:var(--muted);">${ex.unit}</span></div>
+                      <div style="font-size:10px;color:var(--muted);flex:1;">${l.date}</div>
+                      ${l.note ? `<div style="font-size:10px;color:var(--muted);font-style:italic;max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${l.note}</div>` : ''}
+                    </div>`).join('')}
+                </div>` : '';
+              return `
+                <div>
+                  <div style="display:flex;align-items:center;gap:8px;padding:4px 0;${allLogs.length > 0 ? 'cursor:pointer;' : ''}"
+                    onclick="${allLogs.length > 0 ? `prState.historyOpen['${histKey}']=!prState.historyOpen['${histKey}'];renderPRBook();` : ''}">
+                    <div style="width:24px;height:24px;border-radius:50%;background:${u.color};display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:#fff;flex-shrink:0;">${getInitial(u.username)}</div>
+                    <div style="flex:1;font-size:13px;font-weight:600;color:var(--text);">${u.username}</div>
+                    ${best
+                      ? `<div style="font-size:14px;font-weight:800;color:${bp.color};">${best.value}<span style="font-size:11px;color:var(--muted);font-weight:400;"> ${ex.unit}</span></div>
+                         ${allLogs.length > 1 ? `<div style="font-size:10px;color:var(--muted);margin-left:4px;">${histOpen ? '▲' : '▼'}</div>` : ''}`
+                      : `<div style="font-size:11px;color:var(--muted);font-style:italic;">—</div>`}
+                  </div>
+                  ${histHTML}
+                </div>`;
+            }).join('')}
+          </div>
+          ${isLogOpen ? `
+            <div style="background:var(--bg);border-radius:10px;padding:10px;border:1.5px solid ${bp.color}30;">
+              <div style="font-size:11px;color:var(--muted);margin-bottom:6px;">
+                ${myBest ? `Your best: <strong style="color:${bp.color}">${myBest.value} ${ex.unit}</strong>` : 'No PR yet — set one!'}
+                ${timeBased ? ' · lower is better' : ''}
+              </div>
+              <input id="prValueInput" type="number" step="0.1" min="0" placeholder="${ex.unit}" inputmode="decimal"
+                style="width:100%;box-sizing:border-box;background:var(--surface);border:1.5px solid ${bp.color};border-radius:8px;padding:8px 10px;color:var(--text);font-size:16px;font-weight:800;outline:none;margin-bottom:8px;" />
+              <div style="display:flex;gap:6px;">
+                <button onclick="submitPR('${name}')"
+                  style="flex:1;background:${bp.color};border:none;border-radius:8px;padding:9px;font-weight:700;color:#fff;cursor:pointer;font-size:13px;">🏆 Save PR</button>
+                <button onclick="prState.logForm=null;renderPRBook();"
+                  style="flex:1;background:var(--surface);border:1.5px solid var(--border);border-radius:8px;padding:9px;font-weight:600;color:var(--muted);cursor:pointer;font-size:12px;">Cancel</button>
+              </div>
+            </div>` : `
+            <button onclick="prState.logForm='${name}';renderPRBook();"
+              style="width:100%;background:${bp.color};border:none;border-radius:8px;padding:9px;font-weight:700;color:#fff;cursor:pointer;font-size:13px;">+ Log PR</button>`}
+        </div>` : '';
+
+      return `<div onclick="if(event.target.tagName!=='BUTTON'&&event.target.tagName!=='INPUT'){prState.expandedCard=prState.expandedCard==='${name}'?null:'${name}';if(prState.expandedCard!=='${name}')prState.logForm=null;renderPRBook();}"
+        style="background:var(--surface);border-radius:14px;cursor:pointer;border:1.5px solid ${isExpanded ? bp.color+'50' : 'var(--border)'};overflow:hidden;transition:border 0.15s;">
+        <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;">
+          <div style="width:36px;height:36px;border-radius:10px;background:${bp.bg};flex-shrink:0;display:flex;align-items:center;justify-content:center;overflow:hidden;padding:3px;box-sizing:border-box;">
+            ${bp.svg}
+          </div>
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:14px;font-weight:800;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${name}</div>
+            <div style="display:inline-block;padding:1px 6px;border-radius:8px;font-size:10px;font-weight:700;background:${bp.bg};color:${bp.color};">${bp.label}</div>
+          </div>
+          <div style="text-align:right;flex-shrink:0;">
+            ${leader
+              ? `<div style="display:flex;align-items:center;gap:4px;justify-content:flex-end;">
+                  <div style="width:18px;height:18px;border-radius:50%;background:${leaderUser.color};display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:700;color:#fff;">${getInitial(leaderUser.username)}</div>
+                  <div style="font-size:16px;font-weight:900;color:${bp.color};line-height:1;">${leader.value}</div>
+                  <div style="font-size:10px;color:var(--muted);">${ex.unit}</div>
+                </div>`
+              : `<div style="font-size:11px;color:var(--muted);font-style:italic;">No PR</div>`}
+            <div style="font-size:10px;color:var(--muted);text-align:right;margin-top:1px;">${isExpanded ? '▲' : '▼'}</div>
+          </div>
+        </div>
+        ${expandedHTML}
+      </div>`;
+    }).join('')}
+  </div>`;
 }
 
 function submitPR(exercise) {
