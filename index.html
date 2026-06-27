@@ -1566,7 +1566,7 @@ function goodDayStreakOnDay(username, dateStr) {
         if (e && (e.badHabits || []).length > 0) break;
         continue;
       }
-      const activityOk = d < '2026-06-27' || (e.activity && e.activity !== 'None');
+      const activityOk = d < '2026-06-26' || (e.activity && e.activity !== 'None');
       const isGood = activityOk && proteinGoodDay(e.protein) && (e.badHabits || []).length === 0;
       if (isGood) streak++;
       else break;
@@ -1663,7 +1663,7 @@ function _calcDayScoreNew(entry, username, dateStr) {
     const pts = BAD_PTS[b] || -10; neg += Math.abs(pts); notes.push({ label: b, pts });
   });
 
-  const activityOk = dateStr < '2026-06-27' || (entry.activity && entry.activity !== 'None');
+  const activityOk = dateStr < '2026-06-26' || (entry.activity && entry.activity !== 'None');
   let cleanSheet = entry.gym && activityOk && proteinGoodDay(entry.protein) && (entry.badHabits || []).length === 0;
   if (cleanSheet) { pos += 4; notes.push({ label: 'Good Day ⭐', pts: 4, bonus: true }); }
 
