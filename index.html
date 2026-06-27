@@ -1561,10 +1561,12 @@ function goodDayStreakOnDay(username, dateStr) {
     for (let i = dates.length - 1; i >= 0; i--) {
       const d = dates[i];
       const e = log[d];
-      if (!e || !e.gym) continue; // rest day = neutral within gym streak window
-      const isGood = e.activity &&
-        (e.activity !== 'Other' || getApprovalStatus(username, d) === 'approved') &&
-        proteinGoodDay(e.protein) && (e.badHabits || []).length === 0;
+      if (!e || !e.gym) {
+        // rest day: neutral only if no bad habits logged
+        if (e && (e.badHabits || []).length > 0) break;
+        continue;
+      }
+      const isGood = proteinGoodDay(e.protein) && (e.badHabits || []).length === 0;
       if (isGood) streak++;
       else break;
     }
