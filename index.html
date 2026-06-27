@@ -1562,8 +1562,11 @@ function goodDayStreakOnDay(username, dateStr) {
       const d = dates[i];
       const e = log[d];
       if (!e || !e.gym) {
-        // rest day: neutral only if no bad habits logged
-        if (e && (e.badHabits || []).length > 0) break;
+        // rest day: neutral only if activity done + no bad habits; else break
+        if (!e) continue;
+        const restOk = d < '2026-06-26'
+          || (e.activity && e.activity !== 'None' && (e.badHabits || []).length === 0);
+        if (!restOk) break;
         continue;
       }
       const activityOk = d < '2026-06-26' || (e.activity && e.activity !== 'None');
