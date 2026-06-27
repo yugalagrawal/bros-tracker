@@ -2699,8 +2699,8 @@ function renderAwards() {
     const hasLogs = USERS.some(u => Object.keys(getUserLog(u.username)).some(d => d >= w.start && d <= w.end));
     if (!hasLogs) return;
     const winners = scores.filter(s => s.score === max);
-    if (winners.length === 1) tally[winners[0].username]++;
-    // ties: no award given (or split — we'll skip ties for clean results)
+    const share = 1 / winners.length;
+    winners.forEach(w => tally[w.username] += share);
   });
 
   // Sort by tally desc
@@ -2722,7 +2722,7 @@ function renderAwards() {
       <div class="tally-crown">${crownMap[u.dr - 1] || '🎖️'}</div>
       <div class="tally-avatar" style="background:${u.color}">${getInitial(u.username)}</div>
       <div class="tally-name">${u.username}</div>
-      <div class="tally-count" style="color:${colorMap[u.dr - 1] || 'var(--muted)'}">${u.wins}</div>
+      <div class="tally-count" style="color:${colorMap[u.dr - 1] || 'var(--muted)'}">${Number.isInteger(u.wins) ? u.wins : u.wins.toFixed(2).replace(/\.?0+$/, '')}</div>
       <div class="tally-label">Week${u.wins !== 1 ? 's' : ''} Won</div>
     </div>
   `).join('');
@@ -2743,7 +2743,7 @@ function renderAwards() {
     const scores = USERS.map(u => ({ username: u.username, color: u.color, score: getWeekScore(u.username, w.start, w.end) }));
     const maxScore = Math.max(...scores.map(s => s.score));
     const hasAnyLog = USERS.some(u => Object.keys(getUserLog(u.username)).some(d => d >= w.start && d <= w.end));
-    const isWinner = (s) => !isCurrent && hasAnyLog && s.score === maxScore && scores.filter(x => x.score === maxScore).length === 1;
+    const isWinner = (s) => !isCurrent && hasAnyLog && s.score === maxScore;
 
     const dateRange = `${formatDate(w.start).replace(/\w+,\s/, '')} – ${formatDate(w.end).replace(/\w+,\s/, '')}`;
 
