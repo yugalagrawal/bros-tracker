@@ -1527,9 +1527,7 @@ function calcGymStreak(username, upToDate) {
     // Grace period (<7 new dates): rolling window can't fire yet, so only count
     // actual gym days (a no-gym day doesn't add to the count).
     // Once 7+ new dates exist the rolling window has already validated them.
-    const newCount = newDates.length < 7
-      ? newDates.filter(d => log[d] && log[d].gym).length
-      : newDates.length;
+    const newCount = newDates.filter(d => log[d] && log[d].gym).length;
     const totalStreak = legacyBase + newCount;
     const allDates = getDateRange(START_DATE, upToDate);
     const startIdx = Math.max(0, allDates.length - totalStreak);
