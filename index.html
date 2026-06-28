@@ -2170,10 +2170,10 @@ function renderApprovals() {
 
 function renderLeaderboard() {
   const scores = USERS.map(u => {
-    const { streak, streakStartDate } = calcGymStreak(u.username, yesterdayStr());
+    const { streak } = calcGymStreak(u.username, yesterdayStr());
     const log = getUserLog(u.username);
-    const streakDates = getDateRange(streakStartDate, yesterdayStr()).slice(-7);
-    const last7 = streakDates.map(d => log[d] ? (log[d].gym ? 'gym' : 'miss') : 'empty');
+    const last7Dates = getDateRange(START_DATE, yesterdayStr()).slice(-7);
+    const last7 = last7Dates.map(d => log[d] ? (log[d].gym ? 'gym' : 'miss') : 'empty');
     const goodDayStreak = getGoodDayStreak(u.username);
     return { ...u, total: getTotalScore(u.username), streak, logged: getLoggedDays(u.username), last7, goodDayStreak };
   }).sort((a, b) => b.total - a.total);
