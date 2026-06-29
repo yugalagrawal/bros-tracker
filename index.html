@@ -1644,8 +1644,13 @@ function _calcDayScoreNew(entry, username, dateStr) {
   let pos = 0, neg = 0, notes = [];
 
   if (entry.gym) {
-    const isRestDay = dateStr >= '2026-06-29' && gymStreakOnDay(username, dateStr) % 7 === 0;
-    if (!isRestDay) {
+    const isMandatoryRest = (() => {
+      if (dateStr < '2026-06-29') return false;
+      const log = getUserLog(username);
+      const last7 = getDateRange(START_DATE, dateStr).slice(-7);
+      return last7.length === 7 && last7.every(d => log[d] && log[d].gym);
+    })();
+    if (!isMandatoryRest) {
       pos += 10; notes.push({ label: 'Gym', pts: 10 });
     } else {
       notes.push({ label: 'Gym (rest day — no pts)', pts: 0 });
