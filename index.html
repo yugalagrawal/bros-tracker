@@ -1674,14 +1674,14 @@ function _calcDayScoreNew(entry, username, dateStr) {
   if (cleanSheet) { pos += 4; notes.push({ label: 'Good Day ⭐', pts: 4, bonus: true }); }
 
   if (entry.gym) {
-    const gs = gymStreakOnDay(username, dateStr);
+    const gs = dateStr >= '2026-07-06' ? cycleGymStreakOnDay(username, dateStr) : gymStreakOnDay(username, dateStr);
     if (gs > 0 && gs % 3 === 0) {
       const bonus = gs <= 15 ? 3 : gs <= 30 ? 5 : 7;
       pos += bonus; notes.push({ label: `🔥 Gym Streak ${gs} days`, pts: bonus, bonus: true });
     }
   }
   if (cleanSheet) {
-    const gds = goodDayStreakOnDay(username, dateStr);
+    const gds = dateStr >= '2026-07-06' ? cycleGoodDayStreakOnDay(username, dateStr) : goodDayStreakOnDay(username, dateStr);
     if (gds > 0 && gds % 3 === 0) {
       const bonus = gds <= 15 ? 3 : gds <= 30 ? 5 : 7;
       pos += bonus; notes.push({ label: `⭐ Good Day Streak ${gds} days`, pts: bonus, bonus: true });
@@ -1761,10 +1761,23 @@ function calcCycles() {
   return { cycles, currentCycleWins: cumWins, currentCycleStartWeekIdx: cycleStartWeekIdx, weekWins };
 }
 
-// Cycle start date as of a specific date (for historical scoring)
+// Memoization cache for getCycleStartForDate
+const _cycleStartCache = {};
+
+// Cycle start date as of a specific date (for historical scoring).
+// Only looks at weeks ending before dateStr, and only uses pre-Jul-6 week scores
+// to avoid circular dependency with cycle-based streak bonuses.
 function getCycleStartForDate(dateStr) {
+  if (_cycleStartCache[dateStr] !== undefined) return _cycleStartCache[dateStr];
+  const CYCLE_SCORING_START = '2026-07-06';
+  // For dates before cycle scoring started, cycle = challenge start (no resets possible)
+  if (dateStr < CYCLE_SCORING_START) {
+    _cycleStartCache[dateStr] = START_DATE;
+    return START_DATE;
+  }
   const weeks = getWeeks();
-  const completedWeeks = weeks.filter(w => w.end < dateStr);
+  // Only count weeks that ended before CYCLE_SCORING_START to avoid circularity
+  const completedWeeks = weeks.filter(w => w.end < CYCLE_SCORING_START);
   let cumWins = Object.fromEntries(USERS.map(u => [u.username, 0]));
   let cycleStartWeekIdx = 0;
   for (let i = 0; i < completedWeeks.length; i++) {
@@ -1781,7 +1794,9 @@ function getCycleStartForDate(dateStr) {
       cycleStartWeekIdx = i + 1;
     }
   }
-  return cycleStartWeekIdx < completedWeeks.length ? completedWeeks[cycleStartWeekIdx].weekStart : START_DATE;
+  const result = cycleStartWeekIdx < completedWeeks.length ? completedWeeks[cycleStartWeekIdx].weekStart : START_DATE;
+  _cycleStartCache[dateStr] = result;
+  return result;
 }
 
 function getCycleStartDate() {
