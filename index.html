@@ -1674,14 +1674,14 @@ function _calcDayScoreNew(entry, username, dateStr) {
   if (cleanSheet) { pos += 4; notes.push({ label: 'Good Day ⭐', pts: 4, bonus: true }); }
 
   if (entry.gym) {
-    const gs = gymStreakOnDay(username, dateStr);
+    const gs = cycleGymStreakOnDay(username, dateStr);
     if (gs > 0 && gs % 3 === 0) {
       const bonus = gs <= 15 ? 3 : gs <= 30 ? 5 : 7;
       pos += bonus; notes.push({ label: `🔥 Gym Streak ${gs} days`, pts: bonus, bonus: true });
     }
   }
   if (cleanSheet) {
-    const gds = goodDayStreakOnDay(username, dateStr);
+    const gds = cycleGoodDayStreakOnDay(username, dateStr);
     if (gds > 0 && gds % 3 === 0) {
       const bonus = gds <= 15 ? 3 : gds <= 30 ? 5 : 7;
       pos += bonus; notes.push({ label: `⭐ Good Day Streak ${gds} days`, pts: bonus, bonus: true });
@@ -1761,13 +1761,43 @@ function calcCycles() {
   return { cycles, currentCycleWins: cumWins, currentCycleStartWeekIdx: cycleStartWeekIdx, weekWins };
 }
 
-function getCycleStartDate() {
-  const { cycles, weekWins, currentCycleStartWeekIdx } = calcCycles();
-  if (currentCycleStartWeekIdx < weekWins.length) {
-    return weekWins[currentCycleStartWeekIdx].weekStart;
+// Cycle start date as of a specific date (for historical scoring)
+function getCycleStartForDate(dateStr) {
+  const weeks = getWeeks();
+  const completedWeeks = weeks.filter(w => w.end < dateStr);
+  let cumWins = Object.fromEntries(USERS.map(u => [u.username, 0]));
+  let cycleStartWeekIdx = 0;
+  for (let i = 0; i < completedWeeks.length; i++) {
+    const w = completedWeeks[i];
+    const hasLogs = USERS.some(u => Object.keys(getUserLog(u.username)).some(d => d >= w.start && d <= w.end));
+    if (!hasLogs) continue;
+    const scores = USERS.map(u => ({ username: u.username, score: getWeekScore(u.username, w.start, w.end) }));
+    const max = Math.max(...scores.map(s => s.score));
+    const winners = scores.filter(s => s.score === max);
+    const share = 1 / winners.length;
+    winners.forEach(w2 => { cumWins[w2.username] += share; });
+    if (USERS.some(u => cumWins[u.username] >= 3.0)) {
+      cumWins = Object.fromEntries(USERS.map(u => [u.username, 0]));
+      cycleStartWeekIdx = i + 1;
+    }
   }
-  // No weeks logged yet in this cycle — use challenge start
-  return START_DATE;
+  return cycleStartWeekIdx < completedWeeks.length ? completedWeeks[cycleStartWeekIdx].weekStart : START_DATE;
+}
+
+function getCycleStartDate() {
+  return getCycleStartForDate(todayStr());
+}
+
+function cycleGymStreakOnDay(username, dateStr) {
+  const cycleStart = getCycleStartForDate(dateStr);
+  const gs = gymStreakOnDay(username, dateStr);
+  return Math.min(gs, getDateRange(cycleStart, dateStr).length);
+}
+
+function cycleGoodDayStreakOnDay(username, dateStr) {
+  const cycleStart = getCycleStartForDate(dateStr);
+  const gds = goodDayStreakOnDay(username, dateStr);
+  return Math.min(gds, getDateRange(cycleStart, dateStr).length);
 }
 
 function getCurrentCycleWins(username) {
