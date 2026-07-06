@@ -1819,17 +1819,23 @@ function getCurrentCycleWins(username) {
   return calcCycles().currentCycleWins[username] || 0;
 }
 
+function _getCycleStart() {
+  const { weekWins, currentCycleStartWeekIdx } = calcCycles();
+  return (currentCycleStartWeekIdx < weekWins.length)
+    ? weekWins[currentCycleStartWeekIdx].weekStart
+    : START_DATE;
+}
+
 function getCycleGymStreak(username) {
-  const cycleStart = getCycleStartDate();
+  const cycleStart = _getCycleStart();
   const yesterday = yesterdayStr();
   const { streak } = calcGymStreak(username, yesterday);
-  // Cap streak to days since cycle start
   const cycleDays = getDateRange(cycleStart, yesterday).length;
-  return Math.min(streak, cycleDays);
+  return cycleDays > 0 ? Math.min(streak, cycleDays) : streak;
 }
 
 function getCycleGoodDayStreak(username) {
-  const cycleStart = getCycleStartDate();
+  const cycleStart = _getCycleStart();
   const yesterday = yesterdayStr();
   if (yesterday < cycleStart) return 0;
   return goodDayStreakOnDay(username, yesterday);
