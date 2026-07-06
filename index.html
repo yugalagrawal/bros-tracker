@@ -1709,6 +1709,112 @@ function getGoodDayStreak(username) {
   return goodDayStreakOnDay(username, yesterdayStr());
 }
 
+// ── CYCLE SYSTEM ──
+// A cycle completes when someone (or a tie) first reaches 3.0 cumulative wins.
+// Returns array of completed cycles: { cycleNum, winners:[], loser, endWeekIdx, winnerWins }
+// Also computes current cycle state.
+function calcCycles() {
+  const weeks = getWeeks();
+  const today = todayStr();
+  const completedWeeks = weeks.filter(w => w.end < today);
+
+  // Build per-week win shares
+  const weekWins = completedWeeks.map(w => {
+    const scores = USERS.map(u => ({ username: u.username, score: getWeekScore(u.username, w.start, w.end) }));
+    const hasLogs = USERS.some(u => Object.keys(getUserLog(u.username)).some(d => d >= w.start && d <= w.end));
+    if (!hasLogs) return null;
+    const max = Math.max(...scores.map(s => s.score));
+    const winners = scores.filter(s => s.score === max);
+    const share = 1 / winners.length;
+    return { weekStart: w.start, weekEnd: w.end, wins: Object.fromEntries(USERS.map(u => [u.username, winners.find(w => w.username === u.username) ? share : 0])) };
+  }).filter(Boolean);
+
+  const cycles = [];
+  let cycleNum = 1;
+  let cumWins = Object.fromEntries(USERS.map(u => [u.username, 0]));
+  let cycleStartWeekIdx = 0;
+
+  for (let i = 0; i < weekWins.length; i++) {
+    const w = weekWins[i];
+    USERS.forEach(u => { cumWins[u.username] += w.wins[u.username]; });
+
+    const reachedThreshold = USERS.filter(u => cumWins[u.username] >= 3.0);
+    if (reachedThreshold.length > 0) {
+      const allUsernames = USERS.map(u => u.username);
+      const losers = allUsernames.filter(u => !reachedThreshold.find(r => r.username === u));
+      const cycleWins = { ...cumWins };
+      cycles.push({
+        cycleNum,
+        winners: reachedThreshold.map(u => u.username),
+        losers,
+        endWeekIdx: i,
+        cycleStartWeekIdx,
+        wins: cycleWins,
+        weekEnd: w.weekEnd,
+      });
+      cycleNum++;
+      cumWins = Object.fromEntries(USERS.map(u => [u.username, 0]));
+      cycleStartWeekIdx = i + 1;
+    }
+  }
+
+  return { cycles, currentCycleWins: cumWins, currentCycleStartWeekIdx: cycleStartWeekIdx, weekWins };
+}
+
+function getCycleStartDate() {
+  const { cycles, weekWins, currentCycleStartWeekIdx } = calcCycles();
+  if (currentCycleStartWeekIdx < weekWins.length) {
+    return weekWins[currentCycleStartWeekIdx].weekStart;
+  }
+  // No weeks logged yet in this cycle — use challenge start
+  return START_DATE;
+}
+
+function getCurrentCycleWins(username) {
+  return calcCycles().currentCycleWins[username] || 0;
+}
+
+function getCycleGymStreak(username) {
+  const cycleStart = getCycleStartDate();
+  const log = getUserLog(username);
+  const yesterday = yesterdayStr();
+  // Count gym days in cycle only (simplified: consecutive gym days from cycle start up to yesterday)
+  const dates = getDateRange(cycleStart, yesterday);
+  // Use same rolling logic but scoped to cycle dates
+  let streak = 0;
+  for (let i = dates.length - 1; i >= 0; i--) {
+    const d = dates[i];
+    if (log[d] && log[d].gym) streak++;
+    else if (!log[d]) continue; // unlogged day: skip
+    else break;
+  }
+  return streak;
+}
+
+function getCycleGoodDayStreak(username) {
+  const cycleStart = getCycleStartDate();
+  const yesterday = yesterdayStr();
+  if (yesterday < cycleStart) return 0;
+  return goodDayStreakOnDay(username, yesterday);
+}
+
+// Consecutive days (ending yesterday) without a specific bad habit
+function getHabitStreak(username, habit) {
+  const log = getUserLog(username);
+  const yesterday = yesterdayStr();
+  const dates = getDateRange(START_DATE, yesterday);
+  let streak = 0;
+  for (let i = dates.length - 1; i >= 0; i--) {
+    const d = dates[i];
+    const e = log[d];
+    if (!e) continue; // unlogged day: skip
+    const hasBadHabit = (e.badHabits || []).includes(habit);
+    if (!hasBadHabit) streak++;
+    else break;
+  }
+  return streak;
+}
+
 function getLoggedDays(username) {
   return Object.keys(getUserLog(username)).length;
 }
@@ -2227,14 +2333,14 @@ function renderMyStats() {
   const allDates = getDateRange(START_DATE, todayStr());
   const loggedDates = allDates.filter(d => log[d]);
   const gymDays = loggedDates.filter(d => log[d].gym).length;
-  const cleanDays = loggedDates.filter(d => {
-    const e = log[d];
-    return e.gym && e.activity && (e.badHabits || []).length === 0;
-  }).length;
-  const totalDays = allDates.length;
+  const total = getTotalScore(currentUser);
   const { streak: gymStreak } = calcGymStreak(currentUser, yesterdayStr());
   const goodDayStreak = getGoodDayStreak(currentUser);
-  const total         = getTotalScore(currentUser);
+  const cycleGym = getCycleGymStreak(currentUser);
+  const cycleGood = getCycleGoodDayStreak(currentUser);
+  const noSmoke = getHabitStreak(currentUser, 'Smoke');
+  const noDrink = getHabitStreak(currentUser, 'Drink');
+  const noJunk  = getHabitStreak(currentUser, 'Junk Diet');
 
   document.getElementById('myStatsGrid').innerHTML = `
     <div class="stat-tile">
@@ -2248,10 +2354,37 @@ function renderMyStats() {
     <div class="stat-tile">
       <div class="st-val" style="color:var(--accent2)">${gymStreak}</div>
       <div class="st-label">🏋️ Gym Streak</div>
+      <div style="margin-top:6px;display:flex;flex-direction:column;gap:2px;">
+        <span style="font-size:10px;color:var(--muted)">This cycle <b style="color:var(--accent2)">${cycleGym}d</b></span>
+        <span style="font-size:10px;color:var(--muted)">All time <b style="color:var(--accent2)">${gymStreak}d</b></span>
+      </div>
     </div>
     <div class="stat-tile">
       <div class="st-val" style="color:var(--gold)">${goodDayStreak}</div>
       <div class="st-label">⭐ Good Day Streak</div>
+      <div style="margin-top:6px;display:flex;flex-direction:column;gap:2px;">
+        <span style="font-size:10px;color:var(--muted)">This cycle <b style="color:var(--gold)">${cycleGood}d</b></span>
+        <span style="font-size:10px;color:var(--muted)">All time <b style="color:var(--gold)">${goodDayStreak}d</b></span>
+      </div>
+    </div>
+    <div class="stat-tile" style="grid-column:span 2">
+      <div style="display:flex;justify-content:space-around;align-items:center;width:100%;">
+        <div style="text-align:center;">
+          <div style="font-size:24px;font-weight:800;color:#ff6b6b;">${noSmoke}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px;">🚬 No Smoke</div>
+        </div>
+        <div style="width:1px;height:40px;background:var(--border);"></div>
+        <div style="text-align:center;">
+          <div style="font-size:24px;font-weight:800;color:#ffa94d;">${noJunk}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px;">🍟 No Junk</div>
+        </div>
+        <div style="width:1px;height:40px;background:var(--border);"></div>
+        <div style="text-align:center;">
+          <div style="font-size:24px;font-weight:800;color:#74c0fc;">${noDrink}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px;">🍺 No Drink</div>
+        </div>
+      </div>
+      <div style="font-size:10px;color:var(--muted);margin-top:8px;text-align:center;">Consecutive clean days (skipped days don't break streak)</div>
     </div>
   `;
 }
@@ -2729,6 +2862,77 @@ function renderAwards() {
       <div class="tally-label">Week${u.wins !== 1 ? 's' : ''} Won</div>
     </div>
   `).join('');
+
+  // ── CYCLE PROGRESS ──
+  const { cycles, currentCycleWins } = calcCycles();
+
+  // Net balance ledger from past cycles
+  const cleanBalance = Object.fromEntries(USERS.map(u => [u.username, 0]));
+  cycles.forEach(c => {
+    // Each loser pays amountPerLoser total, split equally among winners
+    const amountPerLoser = c.winners.length > 1 ? 1000 : 2000;
+    c.losers.forEach(loser => {
+      cleanBalance[loser] -= amountPerLoser;
+      c.winners.forEach(winner => {
+        cleanBalance[winner] += amountPerLoser / c.winners.length;
+      });
+    });
+  });
+
+  const cycleProgressHTML = `
+    <div style="margin:20px 0 0;padding:16px;background:var(--card);border-radius:12px;border:1px solid var(--border);">
+      <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:12px;">🏆 Current Cycle Progress</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:10px;">First to 3.0 wins claims the cycle — others owe ₹2k each</div>
+      ${USERS.map(u => {
+        const wins = currentCycleWins[u.username] || 0;
+        const pct = Math.min((wins / 3) * 100, 100);
+        const winsDisplay = Number.isInteger(wins) ? wins : wins.toFixed(1);
+        return `
+          <div style="margin-bottom:10px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+              <span style="font-size:12px;font-weight:600;color:${u.color}">${u.username}</span>
+              <span style="font-size:12px;font-weight:700;color:${u.color}">${winsDisplay} / 3.0</span>
+            </div>
+            <div style="background:var(--border);border-radius:6px;height:8px;overflow:hidden;">
+              <div style="background:${u.color};height:100%;width:${pct}%;border-radius:6px;transition:width 0.3s;"></div>
+            </div>
+          </div>
+        `;
+      }).join('')}
+      ${cycles.length > 0 ? `
+        <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--border);">
+          <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:8px;">Past Cycles</div>
+          ${cycles.map(c => `
+            <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:4px;">
+              <span>Cycle ${c.cycleNum}</span>
+              <span>🏆 ${c.winners.join(' & ')}${c.losers.length ? ` · ${c.losers.join(' & ')} owe ₹${c.winners.length > 1 ? '1k each' : '2k'}` : ''}</span>
+            </div>
+          `).join('')}
+        </div>
+      ` : ''}
+    </div>
+    ${cycles.length > 0 ? `
+      <div style="margin:12px 0 0;padding:16px;background:var(--card);border-radius:12px;border:1px solid var(--border);">
+        <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:10px;">💸 Net Balance</div>
+        ${USERS.map(u => {
+          const b = cleanBalance[u.username];
+          if (b === 0) return `<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px;"><span style="color:${u.color};font-weight:600">${u.username}</span><span style="color:var(--muted)">Settled</span></div>`;
+          return `<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px;">
+            <span style="color:${u.color};font-weight:600">${u.username}</span>
+            <span style="color:${b > 0 ? 'var(--accent)' : 'var(--danger)'};font-weight:700">${b > 0 ? '+₹' + b.toLocaleString() : '-₹' + Math.abs(b).toLocaleString()}</span>
+          </div>`;
+        }).join('')}
+      </div>
+    ` : ''}
+  `;
+
+  // Inject cycle section before weeksList
+  const existingCycle = document.getElementById('cycleSection');
+  if (existingCycle) existingCycle.remove();
+  const cycleDiv = document.createElement('div');
+  cycleDiv.id = 'cycleSection';
+  cycleDiv.innerHTML = cycleProgressHTML;
+  document.getElementById('weeksList').before(cycleDiv);
 
   // Week list — show all weeks up to current
   const visibleWeeks = weeks.filter(w => w.start <= today).reverse(); // newest first
