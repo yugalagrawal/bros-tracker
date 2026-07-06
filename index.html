@@ -1533,9 +1533,11 @@ function calcGymStreak(username, upToDate) {
     const startIdx = Math.max(0, allDates.length - totalStreak);
     return { streak: totalStreak, streakStartDate: allDates[startIdx] || upToDate };
   } else {
-    // Failed in new era — streak is only post-failure new dates
+    // Failed in new era — count actual gym days after last failure (not calendar days)
     const streakStartIdx = lastFailIdx + 1;
-    return { streak: newDates.length - streakStartIdx, streakStartDate: newDates[streakStartIdx] || upToDate };
+    const postFailDates = newDates.slice(streakStartIdx);
+    const streak = postFailDates.filter(d => log[d] && log[d].gym).length;
+    return { streak, streakStartDate: newDates[streakStartIdx] || upToDate };
   }
 }
 
