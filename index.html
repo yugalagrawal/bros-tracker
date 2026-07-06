@@ -1776,19 +1776,11 @@ function getCurrentCycleWins(username) {
 
 function getCycleGymStreak(username) {
   const cycleStart = getCycleStartDate();
-  const log = getUserLog(username);
   const yesterday = yesterdayStr();
-  // Count gym days in cycle only (simplified: consecutive gym days from cycle start up to yesterday)
-  const dates = getDateRange(cycleStart, yesterday);
-  // Use same rolling logic but scoped to cycle dates
-  let streak = 0;
-  for (let i = dates.length - 1; i >= 0; i--) {
-    const d = dates[i];
-    if (log[d] && log[d].gym) streak++;
-    else if (!log[d]) continue; // unlogged day: skip
-    else break;
-  }
-  return streak;
+  const { streak } = calcGymStreak(username, yesterday);
+  // Cap streak to days since cycle start
+  const cycleDays = getDateRange(cycleStart, yesterday).length;
+  return Math.min(streak, cycleDays);
 }
 
 function getCycleGoodDayStreak(username) {
