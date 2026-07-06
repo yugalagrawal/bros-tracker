@@ -2885,23 +2885,10 @@ function renderAwards() {
   // ── CYCLE PROGRESS ──
   const { cycles, currentCycleWins } = calcCycles();
 
-  // Net balance ledger from past cycles
-  const cleanBalance = Object.fromEntries(USERS.map(u => [u.username, 0]));
-  cycles.forEach(c => {
-    // Each loser pays amountPerLoser total, split equally among winners
-    const amountPerLoser = c.winners.length > 1 ? 1000 : 2000;
-    c.losers.forEach(loser => {
-      cleanBalance[loser] -= amountPerLoser;
-      c.winners.forEach(winner => {
-        cleanBalance[winner] += amountPerLoser / c.winners.length;
-      });
-    });
-  });
-
   const cycleProgressHTML = `
     <div style="margin:20px 0 0;padding:16px;background:var(--card);border-radius:12px;border:1px solid var(--border);">
       <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:12px;">🏆 Current Cycle Progress</div>
-      <div style="font-size:11px;color:var(--muted);margin-bottom:10px;">First to 3.0 wins claims the cycle — others owe ₹2k each</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:10px;">First to 3.0 wins claims the cycle</div>
       ${USERS.map(u => {
         const wins = currentCycleWins[u.username] || 0;
         const pct = Math.min((wins / 3) * 100, 100);
@@ -2924,25 +2911,12 @@ function renderAwards() {
           ${cycles.map(c => `
             <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:4px;">
               <span>Cycle ${c.cycleNum}</span>
-              <span>🏆 ${c.winners.join(' & ')}${c.losers.length ? ` · ${c.losers.join(' & ')} owe ₹${c.winners.length > 1 ? '1k each' : '2k'}` : ''}</span>
+              <span>🏆 ${c.winners.join(' & ')}</span>
             </div>
           `).join('')}
         </div>
       ` : ''}
     </div>
-    ${cycles.length > 0 ? `
-      <div style="margin:12px 0 0;padding:16px;background:var(--card);border-radius:12px;border:1px solid var(--border);">
-        <div style="font-size:13px;font-weight:700;color:var(--text);margin-bottom:10px;">💸 Net Balance</div>
-        ${USERS.map(u => {
-          const b = cleanBalance[u.username];
-          if (b === 0) return `<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px;"><span style="color:${u.color};font-weight:600">${u.username}</span><span style="color:var(--muted)">Settled</span></div>`;
-          return `<div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:6px;">
-            <span style="color:${u.color};font-weight:600">${u.username}</span>
-            <span style="color:${b > 0 ? 'var(--accent)' : 'var(--danger)'};font-weight:700">${b > 0 ? '+₹' + b.toLocaleString() : '-₹' + Math.abs(b).toLocaleString()}</span>
-          </div>`;
-        }).join('')}
-      </div>
-    ` : ''}
   `;
 
   // Inject cycle section before weeksList
