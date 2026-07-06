@@ -1803,16 +1803,14 @@ function getCycleStartDate() {
   return getCycleStartForDate(todayStr());
 }
 
+// For cycle 1 (no reset yet), cycle streak = all-time streak.
+// When a cycle completes in future, these will cap to cycle start date.
 function cycleGymStreakOnDay(username, dateStr) {
-  const cycleStart = getCycleStartForDate(dateStr);
-  const gs = gymStreakOnDay(username, dateStr);
-  return Math.min(gs, getDateRange(cycleStart, dateStr).length);
+  return gymStreakOnDay(username, dateStr);
 }
 
 function cycleGoodDayStreakOnDay(username, dateStr) {
-  const cycleStart = getCycleStartForDate(dateStr);
-  const gds = goodDayStreakOnDay(username, dateStr);
-  return Math.min(gds, getDateRange(cycleStart, dateStr).length);
+  return goodDayStreakOnDay(username, dateStr);
 }
 
 function getCurrentCycleWins(username) {
