@@ -1542,6 +1542,27 @@ function calcGymStreak(username, upToDate) {
   }
 }
 
+// Debug: call debugStreak('Vikas') from browser console
+window.debugStreak = function(username) {
+  const TRANSITION = '2026-06-22';
+  const log = getUserLog(username);
+  const yesterday = yesterdayStr();
+  const newDates = getDateRange(TRANSITION, yesterday);
+  const legacyBase = calcGymStreakLegacy(username, '2026-06-21');
+  console.log(`=== ${username} Streak Debug ===`);
+  console.log(`legacyBase: ${legacyBase}`);
+  console.log(`newDates: ${newDates[0]} to ${newDates[newDates.length-1]} (${newDates.length} days)`);
+  let lastFailIdx = -1;
+  for (let i = 6; i < newDates.length; i++) {
+    const win = newDates.slice(i - 6, i + 1);
+    const gymCount = win.filter(d => log[d] && log[d].gym).length;
+    if (gymCount < 5) { lastFailIdx = i; console.log(`FAIL window ${win[0]}–${win[6]}: ${gymCount}/7 gym`); }
+  }
+  console.log(`lastFailIdx: ${lastFailIdx}`);
+  console.log(`Final streak: ${calcGymStreak(username, yesterday).streak}`);
+  console.log('Last 16 days:', newDates.slice(-16).map(d => d + '=' + (log[d] ? (log[d].gym ? 'GYM' : 'MISS') : 'UNLOGGED')).join(', '));
+};
+
 // Count gym streak ON a specific day (including that day)
 function gymStreakOnDay(username, dateStr) {
   return calcGymStreak(username, dateStr).streak;
