@@ -1533,11 +1533,12 @@ function calcGymStreak(username, upToDate) {
     const startIdx = Math.max(0, allDates.length - totalStreak);
     return { streak: totalStreak, streakStartDate: allDates[startIdx] || upToDate };
   } else {
-    // Streak = gym days from the last failed window date onwards (inclusive).
-    // The failure date itself can be day 1 of a new streak.
-    const postFailDates = newDates.slice(lastFailIdx);
+    // Count gym days from the START of the last failing window onwards.
+    // e.g. window Jun30–Jul6 fails but Jul5+Jul6 are gym days → streak = 2.
+    const windowStart = Math.max(0, lastFailIdx - 6);
+    const postFailDates = newDates.slice(windowStart);
     const streak = postFailDates.filter(d => log[d] && log[d].gym).length;
-    return { streak, streakStartDate: newDates[lastFailIdx] || upToDate };
+    return { streak, streakStartDate: newDates[windowStart] || upToDate };
   }
 }
 
