@@ -2693,7 +2693,7 @@ function buildPointsPreview() {
     neg += Math.abs(pts); rows += row(`${badIcon(b)} ${b}`, `${pts}`, 'neg');
   });
 
-  const goodDay = logState.gym === true && proteinGoodDay(logState.protein) && logState.badHabits.length === 0;
+  const goodDay = logState.gym === true && logState.activity && logState.activity !== 'None' && proteinGoodDay(logState.protein) && logState.badHabits.length === 0;
   if (goodDay) { pos += 4; rows += row('⭐ Good Day Bonus', '+4', 'bonus'); }
 
   if (!rows) return '';
