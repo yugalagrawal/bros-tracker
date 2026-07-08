@@ -1410,6 +1410,13 @@ function getUserLog(username) {
   return appData[username];
 }
 
+function lastLoggedDate(username) {
+  const log = getUserLog(username);
+  const yesterday = yesterdayStr();
+  const dates = Object.keys(log).filter(d => d <= yesterday).sort();
+  return dates[dates.length - 1] || yesterday;
+}
+
 // ── APPROVALS ──
 function getApprovals() {
   if (!appData._approvals) appData._approvals = {};
@@ -1730,7 +1737,7 @@ function getCurrentStreak(username) {
 }
 
 function getGoodDayStreak(username) {
-  return goodDayStreakOnDay(username, yesterdayStr());
+  return goodDayStreakOnDay(username, lastLoggedDate(username));
 }
 
 // ── CYCLE SYSTEM ──
@@ -1849,11 +1856,11 @@ function _getCycleStart() {
 }
 
 function getCycleGymStreak(username) {
-  return calcGymStreak(username, yesterdayStr()).streak;
+  return calcGymStreak(username, lastLoggedDate(username)).streak;
 }
 
 function getCycleGoodDayStreak(username) {
-  return goodDayStreakOnDay(username, yesterdayStr());
+  return goodDayStreakOnDay(username, lastLoggedDate(username));
 }
 
 // Consecutive days (ending yesterday) without a specific bad habit
@@ -2339,7 +2346,7 @@ function renderApprovals() {
 
 function renderLeaderboard() {
   const scores = USERS.map(u => {
-    const { streak } = calcGymStreak(u.username, yesterdayStr());
+    const { streak } = calcGymStreak(u.username, lastLoggedDate(u.username));
     const log = getUserLog(u.username);
     const last7Dates = getDateRange(START_DATE, yesterdayStr()).slice(-7);
     const last7 = last7Dates.map(d => log[d] ? (log[d].gym ? 'gym' : 'miss') : 'empty');
@@ -2392,7 +2399,7 @@ function renderMyStats() {
   const loggedDates = allDates.filter(d => log[d]);
   const gymDays = loggedDates.filter(d => log[d].gym).length;
   const total = getTotalScore(currentUser);
-  const { streak: gymStreak } = calcGymStreak(currentUser, yesterdayStr());
+  const { streak: gymStreak } = calcGymStreak(currentUser, lastLoggedDate(currentUser));
   const goodDayStreak = getGoodDayStreak(currentUser);
   const cycleGym = getCycleGymStreak(currentUser);
   const cycleGood = getCycleGoodDayStreak(currentUser);
