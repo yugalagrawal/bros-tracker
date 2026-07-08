@@ -2696,6 +2696,31 @@ function buildPointsPreview() {
   const goodDay = logState.gym === true && logState.activity === 'Yes' && proteinGoodDay(logState.protein) && logState.badHabits.length === 0;
   if (goodDay) { pos += 4; rows += row('⭐ Good Day Bonus', '+4', 'bonus'); }
 
+  // Streak bonuses (simulate what calcDayScore will award after save)
+  if (logState.gym === true) {
+    // Temporarily inject today's gym into the log to compute streak
+    const log = getUserLog(currentUser);
+    const hadEntry = log[logDate];
+    log[logDate] = { gym: true, activity: logState.activity, protein: logState.protein, badHabits: [...logState.badHabits] };
+    const gs = logDate >= '2026-07-06' ? cycleGymStreakOnDay(currentUser, logDate) : gymStreakOnDay(currentUser, logDate);
+    if (hadEntry === undefined) delete log[logDate]; else log[logDate] = hadEntry;
+    if (gs > 0 && gs % 3 === 0) {
+      const bonus = gs <= 15 ? 3 : gs <= 30 ? 5 : 7;
+      pos += bonus; rows += row(`🔥 Gym Streak ${gs}d`, `+${bonus}`, 'bonus');
+    }
+  }
+  if (goodDay) {
+    const log = getUserLog(currentUser);
+    const hadEntry = log[logDate];
+    log[logDate] = { gym: true, activity: logState.activity, protein: logState.protein, badHabits: [...logState.badHabits] };
+    const gds = logDate >= '2026-07-06' ? cycleGoodDayStreakOnDay(currentUser, logDate) : goodDayStreakOnDay(currentUser, logDate);
+    if (hadEntry === undefined) delete log[logDate]; else log[logDate] = hadEntry;
+    if (gds > 0 && gds % 3 === 0) {
+      const bonus = gds <= 15 ? 3 : gds <= 30 ? 5 : 7;
+      pos += bonus; rows += row(`⭐ Good Day Streak ${gds}d`, `+${bonus}`, 'bonus');
+    }
+  }
+
   if (!rows) return '';
 
   const score = pos - neg;
