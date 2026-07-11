@@ -1186,7 +1186,9 @@
         <div style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:0.5px;padding:10px 0 4px;">DAILY POINTS</div>
         <div class="rules-item"><span class="ri-label">🏋️ Gym session</span><span class="ri-pts pos">+10 pts</span></div>
         <div class="rules-item"><span class="ri-label">🏃 Activity — Steps 10k+ / Run 4km+ / Sports 1hr+</span><span class="ri-pts pos">+5 pts</span></div>
-        <div class="rules-item"><span class="ri-label">⭐ Good Day — Gym + Protein 75g+ + No Bad Habits</span><span class="ri-pts bonus">+4 bonus</span></div>
+        <div class="rules-item"><span class="ri-label">🧠 Productive Day (from Jul 13) — study, learn, quality time, fun outside</span><span class="ri-pts pos">+3 pts</span></div>
+        <div class="rules-item"><span class="ri-label">⭐ Good Day — Gym + Activity + Protein 75g+ + No Bad Habits</span><span class="ri-pts bonus">+4 bonus</span></div>
+        <div class="rules-item"><span class="ri-label">🏋️ Max 5 consecutive gym days earn pts (from Jul 13) — 6th day = forced rest (0 pts)</span><span class="ri-pts neg">rule</span></div>
 
         <div style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:0.5px;padding:10px 0 4px;">PROTEIN</div>
         <div class="rules-item"><span class="ri-label">🥩 0–50g</span><span class="ri-pts neg">−5 pts</span></div>
@@ -1678,6 +1680,10 @@ function _calcDayScoreNew(entry, username, dateStr) {
     const isMandatoryRest = (() => {
       if (dateStr < '2026-06-29') return false;
       const log = getUserLog(username);
+      if (dateStr >= '2026-07-13') {
+        const last6 = getDateRange(START_DATE, dateStr).slice(-6);
+        return last6.length === 6 && last6.every(d => log[d] && log[d].gym);
+      }
       const last7 = getDateRange(START_DATE, dateStr).slice(-7);
       return last7.length === 7 && last7.every(d => log[d] && log[d].gym);
     })();
@@ -1689,6 +1695,8 @@ function _calcDayScoreNew(entry, username, dateStr) {
   }
 
   if (entry.activity === 'Yes') { pos += 5; notes.push({ label: 'Activity', pts: 5 }); }
+
+  if (dateStr >= '2026-07-13' && entry.productive === true) { pos += 3; notes.push({ label: 'Productive Day 🧠', pts: 3 }); }
 
   const pPts = proteinPts(entry.protein);
   if (pPts !== 0) {
@@ -2520,7 +2528,7 @@ function badIcon(b) {
 }
 
 // ── LOG FORM ──
-let logState = { gym: null, activity: null, activityOther: '', sportsType: '', badHabits: [], protein: null };
+let logState = { gym: null, activity: null, activityOther: '', sportsType: '', badHabits: [], protein: null, productive: null };
 
 function yesterdayStr() {
   const d = new Date();
@@ -2598,7 +2606,7 @@ function renderLogForm() {
   }
 
   // Yesterday, not yet logged — show the form
-  logState = { gym: null, activity: null, activityOther: '', sportsType: '', protein: null, badHabits: [] };
+  logState = { gym: null, activity: null, activityOther: '', sportsType: '', protein: null, badHabits: [], productive: null };
   area.innerHTML = buildLogFormHTML();
   renderBroLogs();
 }
@@ -2683,6 +2691,15 @@ function buildLogFormHTML() {
       </div>
     </div>
 
+    ${logDate >= '2026-07-13' ? `<div class="form-group">
+      <label>🧠 Productive day?</label>
+      <div class="toggle-group">
+        <button class="toggle-btn ${logState.productive === true ? 'selected-yes' : ''}" onclick="setProductive(true)">✅ Yes</button>
+        <button class="toggle-btn ${logState.productive === false ? 'selected-no' : ''}" onclick="setProductive(false)">❌ No</button>
+      </div>
+      <p style="font-size:11px;color:var(--accent3);background:rgba(99,102,241,0.08);border:1px solid rgba(99,102,241,0.2);border-radius:6px;padding:5px 8px;margin-top:6px;">Internal feeling only — outside health logs. Did you study, learn something new, go out for fun, spend quality time with family/friends, or do anything that felt personally productive or fulfilling? Health already counted above.</p>
+    </div>` : ''}
+
     ${buildPointsPreview()}
 
     <button class="btn-log" onclick="submitLog()" ${!isFormValid() ? 'disabled' : ''}>
@@ -2716,6 +2733,8 @@ function buildPointsPreview() {
 
   const goodDay = logState.gym === true && logState.activity === 'Yes' && proteinGoodDay(logState.protein) && logState.badHabits.length === 0;
   if (goodDay) { pos += 4; rows += row('⭐ Good Day Bonus', '+4', 'bonus'); }
+
+  if (logDate >= '2026-07-13' && logState.productive === true) { pos += 3; rows += row('🧠 Productive Day', '+3', 'pos'); }
 
   // Streak bonuses (simulate what calcDayScore will award after save)
   if (logState.gym === true) {
@@ -2831,6 +2850,11 @@ function toggleBad(val) {
   document.getElementById('logFormArea').innerHTML = buildLogFormHTML();
 }
 
+function setProductive(val) {
+  logState.productive = val;
+  document.getElementById('logFormArea').innerHTML = buildLogFormHTML();
+}
+
 function editLog() {
   const log = getUserLog(currentUser);
   const existing = log[logDate];
@@ -2839,6 +2863,7 @@ function editLog() {
     activity: existing.activity || null,
     badHabits: [...(existing.badHabits || [])],
     protein: existing.protein ?? null,
+    productive: existing.productive ?? null,
   };
   delete log[logDate];
   document.getElementById('logFormArea').innerHTML = buildLogFormHTML();
@@ -2852,6 +2877,7 @@ function submitLog() {
     activity: logState.activity,
     protein: logState.protein,
     badHabits: [...logState.badHabits],
+    productive: logState.productive,
   };
   saveData();
   const result = calcDayScore(log[logDate], currentUser, logDate);
