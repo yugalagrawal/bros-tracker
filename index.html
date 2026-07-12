@@ -1666,7 +1666,7 @@ function _calcDayScoreLegacy(entry, username, dateStr) {
   }
   if (cleanSheet) {
     const gds = goodDayStreakOnDayLegacy(username, dateStr);
-    if (gds > 0 && gds % 4 === 0) { pos += gds; notes.push({ label: `⭐ Good Day Streak ${gds} days`, pts: gds, bonus: true }); }
+    // Good day streak tracked but no bonus points awarded
   }
 
   return { score: pos - neg, notes, cleanSheet, streakActive: false };
@@ -1719,13 +1719,7 @@ function _calcDayScoreNew(entry, username, dateStr) {
       pos += bonus; notes.push({ label: `🔥 Gym Streak ${gs} days`, pts: bonus, bonus: true });
     }
   }
-  if (cleanSheet) {
-    const gds = dateStr >= '2026-07-06' ? cycleGoodDayStreakOnDay(username, dateStr) : goodDayStreakOnDay(username, dateStr);
-    if (gds > 0 && gds % 3 === 0) {
-      const bonus = gds <= 15 ? 3 : gds <= 30 ? 5 : 7;
-      pos += bonus; notes.push({ label: `⭐ Good Day Streak ${gds} days`, pts: bonus, bonus: true });
-    }
-  }
+  // Good day streak tracked but no bonus points awarded
 
   return { score: pos - neg, notes, cleanSheet, streakActive: false };
 }
@@ -2763,14 +2757,7 @@ function buildPointsPreview() {
   }
   if (goodDay) {
     const log = getUserLog(currentUser);
-    const hadEntry = log[logDate];
-    log[logDate] = { gym: true, activity: logState.activity, protein: logState.protein, badHabits: [...logState.badHabits] };
-    const gds = logDate >= '2026-07-06' ? cycleGoodDayStreakOnDay(currentUser, logDate) : goodDayStreakOnDay(currentUser, logDate);
-    if (hadEntry === undefined) delete log[logDate]; else log[logDate] = hadEntry;
-    if (gds > 0 && gds % 3 === 0) {
-      const bonus = gds <= 15 ? 3 : gds <= 30 ? 5 : 7;
-      pos += bonus; rows += row(`⭐ Good Day Streak ${gds}d`, `+${bonus}`, 'bonus');
-    }
+    // Good day streak tracked but no bonus points awarded
   }
 
   if (!rows) return '';
