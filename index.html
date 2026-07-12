@@ -1710,7 +1710,7 @@ function _calcDayScoreNew(entry, username, dateStr) {
 
   const activityOk = dateStr < '2026-06-26' || entry.activity === 'Yes';
   let cleanSheet = entry.gym && activityOk && proteinGoodDay(entry.protein, dateStr) && (entry.badHabits || []).length === 0;
-  if (cleanSheet && dateStr < '2026-07-13') { pos += 4; notes.push({ label: 'Good Day ⭐', pts: 4, bonus: true }); }
+  if (cleanSheet) { pos += 4; notes.push({ label: 'Good Day ⭐', pts: 4, bonus: true }); }
 
   if (entry.gym) {
     const gs = dateStr >= '2026-07-06' ? cycleGymStreakOnDay(username, dateStr) : gymStreakOnDay(username, dateStr);
@@ -2744,7 +2744,7 @@ function buildPointsPreview() {
   });
 
   const goodDay = logState.gym === true && logState.activity === 'Yes' && proteinGoodDay(logState.protein, logDate) && logState.badHabits.length === 0;
-  if (goodDay && logDate < '2026-07-13') { pos += 4; rows += row('⭐ Good Day Bonus', '+4', 'bonus'); }
+  if (goodDay) { pos += 4; rows += row('⭐ Good Day Bonus', '+4', 'bonus'); }
 
   if (logDate >= '2026-07-13' && logState.productive === true) { pos += 3; rows += row('🧠 Productive Day', '+3', 'pos'); }
 
