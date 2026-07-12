@@ -1676,17 +1676,18 @@ function _calcDayScoreLegacy(entry, username, dateStr) {
 function _calcDayScoreNew(entry, username, dateStr) {
   let pos = 0, neg = 0, notes = [];
 
+  const isMandatoryRest = entry.gym && (() => {
+    if (dateStr < '2026-06-29') return false;
+    const log = getUserLog(username);
+    if (dateStr >= '2026-07-13') {
+      const last6 = getDateRange(START_DATE, dateStr).slice(-6);
+      return last6.length === 6 && last6.every(d => log[d] && log[d].gym);
+    }
+    const last7 = getDateRange(START_DATE, dateStr).slice(-7);
+    return last7.length === 7 && last7.every(d => log[d] && log[d].gym);
+  })();
+
   if (entry.gym) {
-    const isMandatoryRest = (() => {
-      if (dateStr < '2026-06-29') return false;
-      const log = getUserLog(username);
-      if (dateStr >= '2026-07-13') {
-        const last6 = getDateRange(START_DATE, dateStr).slice(-6);
-        return last6.length === 6 && last6.every(d => log[d] && log[d].gym);
-      }
-      const last7 = getDateRange(START_DATE, dateStr).slice(-7);
-      return last7.length === 7 && last7.every(d => log[d] && log[d].gym);
-    })();
     if (!isMandatoryRest) {
       pos += 10; notes.push({ label: 'Gym', pts: 10 });
     } else {
@@ -1710,7 +1711,7 @@ function _calcDayScoreNew(entry, username, dateStr) {
 
   const activityOk = dateStr < '2026-06-26' || entry.activity === 'Yes';
   let cleanSheet = entry.gym && activityOk && proteinGoodDay(entry.protein, dateStr) && (entry.badHabits || []).length === 0;
-  if (cleanSheet) { pos += 4; notes.push({ label: 'Good Day ⭐', pts: 4, bonus: true }); }
+  if (cleanSheet && !isMandatoryRest) { pos += 4; notes.push({ label: 'Good Day ⭐', pts: 4, bonus: true }); }
 
   if (entry.gym) {
     const gs = dateStr >= '2026-07-06' ? cycleGymStreakOnDay(username, dateStr) : gymStreakOnDay(username, dateStr);
@@ -2724,7 +2725,18 @@ function buildPointsPreview() {
   let rows = '';
   let pos = 0, neg = 0;
 
-  if (logState.gym === true)  { pos += 10; rows += row('🏋️ Gym', '+10', 'pos'); }
+  const isMandatoryRest = logState.gym === true && (() => {
+    if (logDate < '2026-06-29') return false;
+    const log = getUserLog(currentUser);
+    if (logDate >= '2026-07-13') {
+      const last6 = getDateRange(START_DATE, logDate).slice(-6);
+      return last6.length === 6 && last6.every(d => log[d] && log[d].gym);
+    }
+    const last7 = getDateRange(START_DATE, logDate).slice(-7);
+    return last7.length === 7 && last7.every(d => log[d] && log[d].gym);
+  })();
+
+  if (logState.gym === true)  { if (!isMandatoryRest) { pos += 10; rows += row('🏋️ Gym', '+10', 'pos'); } else { rows += row('🏋️ Gym (rest day — no pts)', '0', 'neg'); } }
   if (logState.gym === false) { rows += row('🏋️ No Gym', '0', 'neg'); }
 
   if (logState.activity === 'Yes') {
@@ -2743,7 +2755,7 @@ function buildPointsPreview() {
     neg += Math.abs(pts); rows += row(`${badIcon(b)} ${b}`, `${pts}`, 'neg');
   });
 
-  const goodDay = logState.gym === true && logState.activity === 'Yes' && proteinGoodDay(logState.protein, logDate) && logState.badHabits.length === 0;
+  const goodDay = logState.gym === true && !isMandatoryRest && logState.activity === 'Yes' && proteinGoodDay(logState.protein, logDate) && logState.badHabits.length === 0;
   if (goodDay) { pos += 4; rows += row('⭐ Good Day Bonus', '+4', 'bonus'); }
 
   if (logDate >= '2026-07-13' && logState.productive === true) { pos += 3; rows += row('🧠 Productive Day', '+3', 'pos'); }
