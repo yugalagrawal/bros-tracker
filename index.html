@@ -1182,44 +1182,58 @@
     <div class="section" id="tab-rules">
       <div class="card">
         <div class="card-title">📋 Scoring Rules</div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:12px;">Current rules effective from Jul 13, 2026</div>
 
-        <div style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:0.5px;padding:10px 0 4px;">DAILY POINTS</div>
+        <div style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:0.5px;padding:6px 0 4px;">EARN POINTS</div>
         <div class="rules-item"><span class="ri-label">🏋️ Gym session</span><span class="ri-pts pos">+10 pts</span></div>
-        <div class="rules-item"><span class="ri-label">🏃 Activity — Steps 10k+ / Run 4km+ / Sports 1hr+</span><span class="ri-pts pos">+5 pts</span></div>
-        <div class="rules-item"><span class="ri-label">🧠 Productive Day (from Jul 13) — study, learn, quality time, fun outside</span><span class="ri-pts pos">+3 pts</span></div>
-        <div class="rules-item"><span class="ri-label">⭐ Good Day — Gym + Activity + Protein 75g+ + No Bad Habits</span><span class="ri-pts bonus">+4 bonus</span></div>
-        <div class="rules-item"><span class="ri-label">🏋️ Max 5 consecutive gym days earn pts</span><span class="ri-pts neg">rule</span></div>
+        <div class="rules-item"><span class="ri-label">🏃 Activity — Steps 10k+ or Run 4km+</span><span class="ri-pts pos">+5 pts</span></div>
+        <div class="rules-item"><span class="ri-label">🧠 Productive Day — study, learn, quality time, fun outside</span><span class="ri-pts pos">+3 pts</span></div>
+        <div class="rules-item"><span class="ri-label">⭐ Good Day Bonus — Gym (pts) + Activity + Protein 75g+ + No Bad Habits</span><span class="ri-pts bonus">+4 bonus</span></div>
 
-        <div style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:0.5px;padding:10px 0 4px;">PROTEIN</div>
-        <div class="rules-item"><span class="ri-label">🥩 0–50g</span><span class="ri-pts neg">−5 pts</span></div>
+        <div style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:0.5px;padding:14px 0 4px;">🥩 PROTEIN</div>
+        <div class="rules-item"><span class="ri-label">🥩 0–50g</span><span class="ri-pts neg">−3 pts</span></div>
         <div class="rules-item"><span class="ri-label">🥩 50–75g</span><span class="ri-pts neg">0 pts</span></div>
-        <div class="rules-item"><span class="ri-label">🥩 75–110g</span><span class="ri-pts pos">+3 pts</span></div>
-        <div class="rules-item"><span class="ri-label">🥩 110g+</span><span class="ri-pts pos">+5 pts</span></div>
+        <div class="rules-item"><span class="ri-label">🥩 75–110g</span><span class="ri-pts pos">+1 pt</span></div>
+        <div class="rules-item"><span class="ri-label">🥩 110g+</span><span class="ri-pts pos">+3 pts</span></div>
 
-        <div style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:0.5px;padding:10px 0 4px;">BAD HABITS</div>
+        <div style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:0.5px;padding:14px 0 4px;">💀 BAD HABITS</div>
         <div class="rules-item"><span class="ri-label">🚬 Smoke</span><span class="ri-pts neg">−20 pts</span></div>
         <div class="rules-item"><span class="ri-label">🍺 Drink</span><span class="ri-pts neg">−30 pts</span></div>
         <div class="rules-item"><span class="ri-label">🍔 Junk Food</span><span class="ri-pts neg">−10 pts</span></div>
 
-        <div style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:0.5px;padding:10px 0 4px;">🔥 GYM STREAK</div>
-        <div class="rules-item"><span class="ri-label">Rolling window — need 5 gym days in any 7-day window (2 rest days/week built-in)</span><span class="ri-pts pos">active</span></div>
+        <div style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:0.5px;padding:14px 0 4px;">🔥 GYM STREAK</div>
+        <div class="rules-item" style="flex-direction:column;align-items:flex-start;gap:3px;">
+          <span class="ri-label">Rolling 5/7 window — need 5 gym days in any 7-day period</span>
+          <span style="font-size:11px;color:var(--muted);padding-left:2px;">2 rest days per week are built-in. Missing a 3rd breaks the streak.</span>
+        </div>
+        <div class="rules-item" style="flex-direction:column;align-items:flex-start;gap:3px;">
+          <span class="ri-label">Max 5 consecutive gym days earn pts — 6th day = 0 gym pts</span>
+          <span style="font-size:11px;color:var(--muted);padding-left:2px;">Streak count still increases. Good Day bonus also blocked on that day.</span>
+        </div>
         <div class="rules-item" style="flex-direction:column;align-items:flex-start;gap:4px;">
-          <span class="ri-label" style="font-weight:600;">Milestone bonus every 3rd gym day</span>
+          <span class="ri-label" style="font-weight:600;">Milestone bonus every 3rd gym day (day 3, 6, 9, ...)</span>
           <div style="display:flex;flex-direction:column;gap:3px;padding-left:8px;width:100%;">
-            <div style="display:flex;justify-content:space-between;font-size:12px;"><span style="color:var(--muted);">Days 3 – 15</span><span class="ri-pts pos">+3 pts</span></div>
-            <div style="display:flex;justify-content:space-between;font-size:12px;"><span style="color:var(--muted);">Days 16 – 30</span><span class="ri-pts pos">+5 pts</span></div>
-            <div style="display:flex;justify-content:space-between;font-size:12px;"><span style="color:var(--muted);">Days 31+</span><span class="ri-pts pos">+7 pts</span></div>
+            <div style="display:flex;justify-content:space-between;font-size:12px;"><span style="color:var(--muted);">Streak days 1–15</span><span class="ri-pts pos">+3 pts</span></div>
+            <div style="display:flex;justify-content:space-between;font-size:12px;"><span style="color:var(--muted);">Streak days 16–30</span><span class="ri-pts pos">+5 pts</span></div>
+            <div style="display:flex;justify-content:space-between;font-size:12px;"><span style="color:var(--muted);">Streak days 31+</span><span class="ri-pts pos">+7 pts</span></div>
           </div>
         </div>
 
-        <div style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:0.5px;padding:10px 0 4px;">⭐ GOOD DAY STREAK</div>
-        <div class="rules-item"><span class="ri-label">Gym rest days are neutral — don't break the streak</span><span class="ri-pts bonus">protected</span></div>
+        <div style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:0.5px;padding:14px 0 4px;">⭐ GOOD DAY STREAK</div>
+        <div class="rules-item" style="flex-direction:column;align-items:flex-start;gap:3px;">
+          <span class="ri-label">Good Day = Gym (pts) + Activity + Protein 75g+ + No Bad Habits</span>
+          <span style="font-size:11px;color:var(--muted);padding-left:2px;">Rest days (no gym) are neutral — they don't break the streak if you did Activity + No Bad Habits. Otherwise streak resets.</span>
+        </div>
+        <div class="rules-item" style="flex-direction:column;align-items:flex-start;gap:3px;">
+          <span class="ri-label">Streak resets to 0 if gym streak breaks</span>
+          <span style="font-size:11px;color:var(--muted);padding-left:2px;">Good Day streak lives inside the gym streak window.</span>
+        </div>
         <div class="rules-item" style="flex-direction:column;align-items:flex-start;gap:4px;">
-          <span class="ri-label" style="font-weight:600;">Milestone bonus every 3rd good day</span>
+          <span class="ri-label" style="font-weight:600;">Milestone bonus every 3rd good day (day 3, 6, 9, ...)</span>
           <div style="display:flex;flex-direction:column;gap:3px;padding-left:8px;width:100%;">
-            <div style="display:flex;justify-content:space-between;font-size:12px;"><span style="color:var(--muted);">Days 3 – 15</span><span class="ri-pts pos">+3 pts</span></div>
-            <div style="display:flex;justify-content:space-between;font-size:12px;"><span style="color:var(--muted);">Days 16 – 30</span><span class="ri-pts pos">+5 pts</span></div>
-            <div style="display:flex;justify-content:space-between;font-size:12px;"><span style="color:var(--muted);">Days 31+</span><span class="ri-pts pos">+7 pts</span></div>
+            <div style="display:flex;justify-content:space-between;font-size:12px;"><span style="color:var(--muted);">Streak days 1–15</span><span class="ri-pts pos">+3 pts</span></div>
+            <div style="display:flex;justify-content:space-between;font-size:12px;"><span style="color:var(--muted);">Streak days 16–30</span><span class="ri-pts pos">+5 pts</span></div>
+            <div style="display:flex;justify-content:space-between;font-size:12px;"><span style="color:var(--muted);">Streak days 31+</span><span class="ri-pts pos">+7 pts</span></div>
           </div>
         </div>
       </div>
