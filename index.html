@@ -2657,7 +2657,7 @@ function isFormValid() {
 function buildLogFormHTML() {
   return `
     <div class="form-group">
-      <label>🏋️ Did you hit the gym?</label>
+      <label>🏋️ Gym / Sports Today</label>
       <div class="toggle-group">
         <button class="toggle-btn ${logState.gym === true ? 'selected-yes' : ''}" onclick="setGym(true)">💪 Yes</button>
         <button class="toggle-btn ${logState.gym === false ? 'selected-no' : ''}" onclick="setGym(false)">❌ No</button>
@@ -2665,12 +2665,12 @@ function buildLogFormHTML() {
     </div>
 
     <div class="form-group">
-      <label>🏃 Activity today?</label>
+      <label>🏃 Activity Today</label>
       <div class="toggle-group">
         <button class="toggle-btn ${logState.activity === 'Yes' ? 'selected-activity' : ''}" onclick="setActivity('Yes')">✅ Yes</button>
         <button class="toggle-btn ${logState.activity === null ? 'selected-no' : ''}" onclick="setActivity(null)">🚫 None</button>
       </div>
-      <p style="font-size:11px;color:var(--accent3);background:rgba(99,102,241,0.08);border:1px solid rgba(99,102,241,0.2);border-radius:6px;padding:5px 8px;margin-top:6px;">Select Yes only if done any one of the following: Steps 10k+ &nbsp;|&nbsp; Run 4km+ &nbsp;|&nbsp; Sports session 1hr+</p>
+      <p style="font-size:11px;color:var(--accent3);background:rgba(99,102,241,0.08);border:1px solid rgba(99,102,241,0.2);border-radius:6px;padding:5px 8px;margin-top:6px;">Select Yes if 10K+ Steps or 4km Running, and Gym/Sports Today</p>
     </div>
 
     <div class="form-group">
