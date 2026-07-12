@@ -1601,7 +1601,7 @@ function goodDayStreakOnDay(username, dateStr) {
         continue;
       }
       const activityOk = d < '2026-06-26' || e.activity === 'Yes';
-      const isGood = activityOk && proteinGoodDay(e.protein) && (e.badHabits || []).length === 0;
+      const isGood = activityOk && proteinGoodDay(e.protein, d) && (e.badHabits || []).length === 0;
       if (isGood) streak++;
       else break;
     }
@@ -1701,7 +1701,7 @@ function _calcDayScoreNew(entry, username, dateStr) {
   const pPts = proteinPts(entry.protein);
   if (pPts !== 0) {
     if (pPts > 0) pos += pPts; else neg += Math.abs(pPts);
-    notes.push({ label: proteinLabel(entry.protein), pts: pPts });
+    notes.push({ label: proteinLabel(entry.protein, dateStr), pts: pPts });
   }
 
   (entry.badHabits || []).forEach(b => {
@@ -1709,7 +1709,7 @@ function _calcDayScoreNew(entry, username, dateStr) {
   });
 
   const activityOk = dateStr < '2026-06-26' || entry.activity === 'Yes';
-  let cleanSheet = entry.gym && activityOk && proteinGoodDay(entry.protein) && (entry.badHabits || []).length === 0;
+  let cleanSheet = entry.gym && activityOk && proteinGoodDay(entry.protein, dateStr) && (entry.badHabits || []).length === 0;
   if (cleanSheet) { pos += 4; notes.push({ label: 'Good Day ⭐', pts: 4, bonus: true }); }
 
   if (entry.gym) {
@@ -2489,7 +2489,7 @@ function renderTodayStatus() {
       ${entry.activity ? `<span class="tag tag-activity">${activityIcon(entry.activity, entry)} ${activityLabel(entry)}</span>` : ''}
       ${(entry.badHabits || []).map(b => `<span class="tag tag-bad">${badIcon(b)} ${b}</span>`).join('')}
       ${result.cleanSheet ? '<span class="tag tag-clean">⭐ Good Day</span>' : ''}
-      ${proteinTag(entry.protein)}
+      ${proteinTag(entry.protein, yesterday)}
     </div>
     <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);text-align:center;font-size:12px;color:var(--muted);">
       📅 Today's activities can be logged tomorrow
@@ -2634,7 +2634,7 @@ function renderBroLogs() {
           ${entry.activity ? `<span class="tag tag-activity">${activityIcon(entry.activity, entry)} ${activityLabel(entry)}</span>` : ''}
           ${(entry.badHabits || []).map(b => `<span class="tag tag-bad">${badIcon(b)} ${b}</span>`).join('')}
           ${result.cleanSheet ? '<span class="tag tag-clean">⭐ Good Day</span>' : ''}
-          ${proteinTag(entry.protein)}
+          ${proteinTag(entry.protein, logDate)}
         </div>`;
     }
     return `
@@ -2676,10 +2676,17 @@ function buildLogFormHTML() {
     <div class="form-group">
       <label>🥩 Protein Today</label>
       <div class="toggle-group">
+        ${logDate >= '2026-07-13' ? `
+        <button class="toggle-btn ${logState.protein === -3 ? 'selected-bad' : ''}" onclick="setProtein(-3)">0–50g (−3)</button>
+        <button class="toggle-btn ${logState.protein === 0  ? 'selected-no'  : ''}" onclick="setProtein(0)">50–75g (0)</button>
+        <button class="toggle-btn ${logState.protein === 1  ? 'selected-yes' : ''}" onclick="setProtein(1)">75–110g (+1)</button>
+        <button class="toggle-btn ${logState.protein === 3  ? 'selected-yes' : ''}" onclick="setProtein(3)">110g+ (+3)</button>
+        ` : `
         <button class="toggle-btn ${logState.protein === -5 ? 'selected-bad' : ''}" onclick="setProtein(-5)">0–50g (−5)</button>
         <button class="toggle-btn ${logState.protein === 0  ? 'selected-no'  : ''}" onclick="setProtein(0)">50–75g (0)</button>
         <button class="toggle-btn ${logState.protein === 3  ? 'selected-yes' : ''}" onclick="setProtein(3)">75–110g (+3)</button>
         <button class="toggle-btn ${logState.protein === 5  ? 'selected-yes' : ''}" onclick="setProtein(5)">110g+ (+5)</button>
+        `}
       </div>
     </div>
 
@@ -2726,9 +2733,9 @@ function buildPointsPreview() {
 
   if (logState.protein != null) {
     const pp = proteinPts(logState.protein);
-    if (pp > 0) { pos += pp; rows += row(`🥩 ${proteinLabel(logState.protein)}`, `+${pp}`, 'pos'); }
-    else if (pp < 0) { neg += Math.abs(pp); rows += row(`🥩 ${proteinLabel(logState.protein)}`, `${pp}`, 'neg'); }
-    else { rows += row(`🥩 ${proteinLabel(logState.protein)}`, '0', 'neg'); }
+    if (pp > 0) { pos += pp; rows += row(`🥩 ${proteinLabel(logState.protein, logDate)}`, `+${pp}`, 'pos'); }
+    else if (pp < 0) { neg += Math.abs(pp); rows += row(`🥩 ${proteinLabel(logState.protein, logDate)}`, `${pp}`, 'neg'); }
+    else { rows += row(`🥩 ${proteinLabel(logState.protein, logDate)}`, '0', 'neg'); }
   }
 
   logState.badHabits.forEach(b => {
@@ -2736,7 +2743,7 @@ function buildPointsPreview() {
     neg += Math.abs(pts); rows += row(`${badIcon(b)} ${b}`, `${pts}`, 'neg');
   });
 
-  const goodDay = logState.gym === true && logState.activity === 'Yes' && proteinGoodDay(logState.protein) && logState.badHabits.length === 0;
+  const goodDay = logState.gym === true && logState.activity === 'Yes' && proteinGoodDay(logState.protein, logDate) && logState.badHabits.length === 0;
   if (goodDay) { pos += 4; rows += row('⭐ Good Day Bonus', '+4', 'bonus'); }
 
   if (logDate >= '2026-07-13' && logState.productive === true) { pos += 3; rows += row('🧠 Productive Day', '+3', 'pos'); }
@@ -2811,23 +2818,37 @@ function proteinPts(val) {
   if (val === 10) return 5;      // legacy 110g+
   return val;                    // new tiers: -5, 0, 3, 5
 }
-function proteinGoodDay(val) {
-  return proteinPts(val) >= 3;
-}
-function proteinLabel(val) {
+function proteinGoodDay(val, dateStr) {
   const pts = proteinPts(val);
+  if (dateStr >= '2026-07-13') return pts >= 1;
+  return pts >= 3;
+}
+function proteinLabel(val, dateStr) {
+  const pts = proteinPts(val);
+  if (dateStr >= '2026-07-13') {
+    if (pts === 3)  return '110g+';
+    if (pts === 1)  return '75–110g';
+    if (pts === 0)  return '50–75g';
+    if (pts === -3) return '0–50g';
+  }
   if (pts === 5)  return '110g+';
   if (pts === 3)  return '75–110g';
   if (pts === 0)  return '50–75g';
-  if (pts === -5) return '0–50g';
+  if (pts <= -3)  return '0–50g';
   return 'Protein';
 }
-function proteinTag(val) {
+function proteinTag(val, dateStr) {
   const pts = proteinPts(val);
+  if (dateStr >= '2026-07-13') {
+    if (pts === 3)  return '<span class="tag" style="background:rgba(0,229,160,0.08);color:#7ee8c8;border:1px solid rgba(0,229,160,0.2);">🥩 110g+ 💪</span>';
+    if (pts === 1)  return '<span class="tag" style="background:rgba(0,229,160,0.08);color:#7ee8c8;border:1px solid rgba(0,229,160,0.2);">🥩 75–110g</span>';
+    if (pts === 0)  return '<span class="tag" style="background:rgba(255,200,0,0.08);color:#b8860b;border:1px solid rgba(255,200,0,0.2);">🥩 50–75g</span>';
+    if (pts === -3) return '<span class="tag" style="background:rgba(248,81,73,0.08);color:var(--danger);border:1px solid rgba(248,81,73,0.2);">🥩 0–50g −3</span>';
+  }
   if (pts === 5)  return '<span class="tag" style="background:rgba(0,229,160,0.08);color:#7ee8c8;border:1px solid rgba(0,229,160,0.2);">🥩 110g+ 💪</span>';
   if (pts === 3)  return '<span class="tag" style="background:rgba(0,229,160,0.08);color:#7ee8c8;border:1px solid rgba(0,229,160,0.2);">🥩 75–110g</span>';
   if (pts === 0)  return '<span class="tag" style="background:rgba(255,200,0,0.08);color:#b8860b;border:1px solid rgba(255,200,0,0.2);">🥩 50–75g</span>';
-  if (pts === -5) return '<span class="tag" style="background:rgba(248,81,73,0.08);color:var(--danger);border:1px solid rgba(248,81,73,0.2);">🥩 0–50g −5</span>';
+  if (pts <= -3)  return '<span class="tag" style="background:rgba(248,81,73,0.08);color:var(--danger);border:1px solid rgba(248,81,73,0.2);">🥩 0–50g −5</span>';
   if (val === true)  return '<span class="tag" style="background:rgba(0,229,160,0.08);color:#7ee8c8;border:1px solid rgba(0,229,160,0.2);">🥩 Protein ✓</span>';
   if (val === false) return '<span class="tag" style="background:rgba(248,81,73,0.08);color:var(--danger);border:1px solid rgba(248,81,73,0.2);">🥩 Low Protein</span>';
   return '';
@@ -3129,7 +3150,7 @@ function renderHistory() {
           ${entry.activity ? `<span class="tag tag-activity">${activityIcon(entry.activity, entry)} ${activityLabel(entry)}</span>` : ''}
           ${(entry.badHabits || []).map(b => `<span class="tag tag-bad">${badIcon(b)} ${b}</span>`).join('')}
           ${result.cleanSheet ? '<span class="tag tag-clean">⭐ Good Day</span>' : ''}
-          ${proteinTag(entry.protein)}
+          ${proteinTag(entry.protein, d)}
           ${entry.productive === true ? '<span class="tag" style="background:rgba(99,102,241,0.1);color:#7c6fff;border:1px solid rgba(99,102,241,0.3);">🧠 Productive</span>' : ''}
         </div>
         ${entry.productive === true && entry.productiveNote ? `<div style="margin-top:6px;font-size:12px;color:var(--muted);background:rgba(99,102,241,0.06);border-left:2px solid rgba(99,102,241,0.4);border-radius:0 4px 4px 0;padding:5px 8px;line-height:1.5;">${entry.productiveNote}</div>` : ''}
