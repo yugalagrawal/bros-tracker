@@ -2528,7 +2528,7 @@ function badIcon(b) {
 }
 
 // ── LOG FORM ──
-let logState = { gym: null, activity: null, activityOther: '', sportsType: '', badHabits: [], protein: null, productive: null };
+let logState = { gym: null, activity: null, activityOther: '', sportsType: '', badHabits: [], protein: null, productive: null, productiveNote: '' };
 
 function yesterdayStr() {
   const d = new Date();
@@ -2606,7 +2606,7 @@ function renderLogForm() {
   }
 
   // Yesterday, not yet logged — show the form
-  logState = { gym: null, activity: null, activityOther: '', sportsType: '', protein: null, badHabits: [], productive: null };
+  logState = { gym: null, activity: null, activityOther: '', sportsType: '', protein: null, badHabits: [], productive: null, productiveNote: '' };
   area.innerHTML = buildLogFormHTML();
   renderBroLogs();
 }
@@ -2650,6 +2650,7 @@ function renderBroLogs() {
 
 function isFormValid() {
   if (logState.gym === null) return false;
+  if (logDate >= '2026-07-13' && logState.productive === true && logState.productiveNote.trim().length < 10) return false;
   return true;
 }
 
@@ -2698,6 +2699,10 @@ function buildLogFormHTML() {
         <button class="toggle-btn ${logState.productive === false ? 'selected-no' : ''}" onclick="setProductive(false)">❌ No</button>
       </div>
       <p style="font-size:11px;color:var(--accent3);background:rgba(99,102,241,0.08);border:1px solid rgba(99,102,241,0.2);border-radius:6px;padding:5px 8px;margin-top:6px;">Internal feeling only — outside health logs. Did you study, learn something new, go out for fun, spend quality time with family/friends, or do anything that felt personally productive or fulfilling? Health already counted above.</p>
+      ${logState.productive === true ? `
+        <textarea id="productiveNoteInput" oninput="updateProductiveNote(this.value)" placeholder="Tell the bros how — what did you do, study, or experience? (min 10 chars)" style="width:100%;margin-top:8px;padding:8px 10px;border-radius:var(--radius);border:1px solid ${logState.productiveNote.trim().length >= 10 ? 'rgba(0,229,160,0.5)' : 'rgba(99,102,241,0.3)'};background:var(--card);color:var(--text);font-size:13px;line-height:1.5;resize:vertical;min-height:70px;box-sizing:border-box;font-family:inherit;" maxlength="300">${logState.productiveNote}</textarea>
+        <div style="text-align:right;font-size:11px;color:${logState.productiveNote.trim().length >= 10 ? 'var(--accent)' : 'var(--muted)'};margin-top:3px;">${logState.productiveNote.trim().length}/300${logState.productiveNote.trim().length < 10 ? ` — ${10 - logState.productiveNote.trim().length} more to go` : ' ✓'}</div>
+      ` : ''}
     </div>` : ''}
 
     ${buildPointsPreview()}
@@ -2852,7 +2857,24 @@ function toggleBad(val) {
 
 function setProductive(val) {
   logState.productive = val;
+  if (val !== true) logState.productiveNote = '';
   document.getElementById('logFormArea').innerHTML = buildLogFormHTML();
+}
+
+function updateProductiveNote(val) {
+  logState.productiveNote = val;
+  const btn = document.querySelector('.btn-log');
+  if (btn) btn.disabled = !isFormValid();
+  const counter = document.getElementById('productiveNoteInput');
+  if (!counter) return;
+  const len = val.trim().length;
+  const parent = counter.parentElement;
+  const countEl = parent ? parent.querySelector('div[style*="text-align:right"]') : null;
+  if (countEl) {
+    countEl.style.color = len >= 10 ? 'var(--accent)' : 'var(--muted)';
+    countEl.textContent = `${len}/300${len < 10 ? ` — ${10 - len} more to go` : ' ✓'}`;
+  }
+  counter.style.borderColor = len >= 10 ? 'rgba(0,229,160,0.5)' : 'rgba(99,102,241,0.3)';
 }
 
 function editLog() {
@@ -2864,6 +2886,7 @@ function editLog() {
     badHabits: [...(existing.badHabits || [])],
     protein: existing.protein ?? null,
     productive: existing.productive ?? null,
+    productiveNote: existing.productiveNote || '',
   };
   delete log[logDate];
   document.getElementById('logFormArea').innerHTML = buildLogFormHTML();
@@ -2878,6 +2901,7 @@ function submitLog() {
     protein: logState.protein,
     badHabits: [...logState.badHabits],
     productive: logState.productive,
+    productiveNote: logState.productive === true ? logState.productiveNote : '',
   };
   saveData();
   const result = calcDayScore(log[logDate], currentUser, logDate);
@@ -3106,7 +3130,9 @@ function renderHistory() {
           ${(entry.badHabits || []).map(b => `<span class="tag tag-bad">${badIcon(b)} ${b}</span>`).join('')}
           ${result.cleanSheet ? '<span class="tag tag-clean">⭐ Good Day</span>' : ''}
           ${proteinTag(entry.protein)}
+          ${entry.productive === true ? '<span class="tag" style="background:rgba(99,102,241,0.1);color:#7c6fff;border:1px solid rgba(99,102,241,0.3);">🧠 Productive</span>' : ''}
         </div>
+        ${entry.productive === true && entry.productiveNote ? `<div style="margin-top:6px;font-size:12px;color:var(--muted);background:rgba(99,102,241,0.06);border-left:2px solid rgba(99,102,241,0.4);border-radius:0 4px 4px 0;padding:5px 8px;line-height:1.5;">${entry.productiveNote}</div>` : ''}
       </div>`;
   }).join('');
 }
