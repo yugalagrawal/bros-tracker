@@ -3450,7 +3450,6 @@ function renderStudyHero() {
           <div class="study-player-name">${v}</div>
           <div class="study-player-score" style="color:${vTotal >= 0 ? '#a5f3d0' : '#fca5a5'}">${vTotal > 0 ? '+' : ''}${vTotal}</div>
           <div class="study-player-sub">total pts</div>
-          ${vYestPts !== null ? `<div style="font-size:11px;color:${ptsColor(vYestPts)};margin-top:4px;font-weight:600">Yesterday: ${vYestPts > 0 ? '+' : ''}${vYestPts}</div>` : ''}
         </div>
         <div class="study-vs-badge">VS</div>
         <div class="study-player">
@@ -3458,7 +3457,6 @@ function renderStudyHero() {
           <div class="study-player-name">${d}</div>
           <div class="study-player-score" style="color:${dTotal >= 0 ? '#a5f3d0' : '#fca5a5'}">${dTotal > 0 ? '+' : ''}${dTotal}</div>
           <div class="study-player-sub">total pts</div>
-          ${dYestPts !== null ? `<div style="font-size:11px;color:${ptsColor(dYestPts)};margin-top:4px;font-weight:600">Yesterday: ${dYestPts > 0 ? '+' : ''}${dYestPts}</div>` : ''}
         </div>
       </div>
       <div class="study-leading-banner">${leadMsg}</div>
