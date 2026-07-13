@@ -1857,14 +1857,54 @@ function getCycleStartDate() {
   return getCycleStartForDate(todayStr());
 }
 
-// For cycle 1 (no reset yet), cycle streak = all-time streak.
-// When a cycle completes in future, these will cap to cycle start date.
+// Gym streak computed fresh from a given cycle start date.
+function calcCycleGymStreak(username, upToDate, cycleStart) {
+  if (!cycleStart || cycleStart <= START_DATE) return calcGymStreak(username, upToDate).streak;
+  const log = getUserLog(username);
+  const dates = getDateRange(cycleStart, upToDate);
+  let lastFailIdx = -1;
+  for (let i = 6; i < dates.length; i++) {
+    const window = dates.slice(i - 6, i + 1);
+    const gymCount = window.filter(d => log[d] && log[d].gym).length;
+    if (gymCount < 5) lastFailIdx = i;
+  }
+  if (lastFailIdx === -1) {
+    return dates.filter(d => log[d] && log[d].gym).length;
+  }
+  const windowStart = Math.max(0, lastFailIdx - 6);
+  return dates.slice(windowStart).filter(d => log[d] && log[d].gym).length;
+}
+
+// Good day streak computed fresh from a given cycle start date.
+function calcCycleGoodDayStreak(username, upToDate, cycleStart) {
+  if (!cycleStart || cycleStart <= START_DATE) return goodDayStreakOnDay(username, upToDate);
+  const cycleGymStreak = calcCycleGymStreak(username, upToDate, cycleStart);
+  if (cycleGymStreak === 0) return 0;
+  const log = getUserLog(username);
+  const dates = getDateRange(cycleStart, upToDate);
+  let streak = 0;
+  for (let i = dates.length - 1; i >= 0; i--) {
+    const d = dates[i];
+    const e = log[d];
+    if (!e || !e.gym) {
+      if (!e) continue;
+      const restOk = e.activity === 'Yes' && (e.badHabits || []).length === 0;
+      if (!restOk) break;
+      continue;
+    }
+    const isGood = e.activity === 'Yes' && proteinGoodDay(e.protein, d) && (e.badHabits || []).length === 0;
+    if (isGood) streak++;
+    else break;
+  }
+  return streak;
+}
+
 function cycleGymStreakOnDay(username, dateStr) {
-  return gymStreakOnDay(username, dateStr);
+  return calcCycleGymStreak(username, dateStr, getCycleStartForDate(dateStr));
 }
 
 function cycleGoodDayStreakOnDay(username, dateStr) {
-  return goodDayStreakOnDay(username, dateStr);
+  return calcCycleGoodDayStreak(username, dateStr, getCycleStartForDate(dateStr));
 }
 
 function getCurrentCycleWins(username) {
@@ -1879,11 +1919,13 @@ function _getCycleStart() {
 }
 
 function getCycleGymStreak(username) {
-  return calcGymStreak(username, lastLoggedDate(username)).streak;
+  const lld = lastLoggedDate(username);
+  return calcCycleGymStreak(username, lld, getCycleStartForDate(lld));
 }
 
 function getCycleGoodDayStreak(username) {
-  return goodDayStreakOnDay(username, lastLoggedDate(username));
+  const lld = lastLoggedDate(username);
+  return calcCycleGoodDayStreak(username, lld, getCycleStartForDate(lld));
 }
 
 // Consecutive days (ending yesterday) without a specific bad habit
