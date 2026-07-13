@@ -2643,8 +2643,10 @@ function renderLogForm() {
           ${existing.activity ? `<span class="tag tag-activity">${activityIcon(existing.activity, existing)} ${activityLabel(existing)}</span>` : ''}
           ${(existing.badHabits || []).map(b => `<span class="tag tag-bad">${badIcon(b)} ${b}</span>`).join('')}
           ${result.cleanSheet ? '<span class="tag tag-clean">⭐ Good Day</span>' : ''}
-          ${existing.protein === true ? '<span class="tag" style="background:rgba(0,229,160,0.08);color:#7ee8c8;border:1px solid rgba(0,229,160,0.2);">🥩 Protein ✓</span>' : existing.protein === false ? '<span class="tag" style="background:rgba(248,81,73,0.08);color:var(--danger);border:1px solid rgba(248,81,73,0.2);">🥩 Low Protein</span>' : ''}
+          ${proteinTag(existing.protein, logDate)}
+          ${existing.productive === true ? '<span class="tag" style="background:rgba(99,102,241,0.1);color:#7c6fff;border:1px solid rgba(99,102,241,0.3);">🧠 Productive</span>' : ''}
         </div>
+        ${existing.productive === true && existing.productiveNote ? `<div style="margin-top:8px;font-size:12px;color:var(--muted);background:rgba(99,102,241,0.06);border-left:2px solid rgba(99,102,241,0.4);border-radius:0 4px 4px 0;padding:5px 8px;line-height:1.5;">${existing.productiveNote}</div>` : ''}
         ${existing.activity === 'Other' ? (() => {
           const st = getApprovalStatus(currentUser, logDate);
           const ap = getApprovals()[approvalKey(currentUser, logDate)];
