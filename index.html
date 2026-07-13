@@ -1388,6 +1388,7 @@ function initApp() {
     dbRef.on('value', (snapshot) => {
       const incoming = snapshot.val() || {};
       appData = incoming;
+      Object.keys(_cycleStartCache).forEach(k => delete _cycleStartCache[k]);
       // If someone is already logged in, re-render with latest data
       if (currentUser) renderAll();
     });
@@ -1819,19 +1820,20 @@ function calcCycles() {
 const _cycleStartCache = {};
 
 // Cycle start date as of a specific date (for historical scoring).
-// Only looks at weeks ending before dateStr, and only uses pre-Jul-6 week scores
-// to avoid circular dependency with cycle-based streak bonuses.
+// Only looks at weeks that fully ended BEFORE the week containing dateStr —
+// this avoids circular dependency: scoring day D uses cycle state, which must
+// not depend on whether D's own week triggered a reset.
 function getCycleStartForDate(dateStr) {
   if (_cycleStartCache[dateStr] !== undefined) return _cycleStartCache[dateStr];
-  const CYCLE_SCORING_START = '2026-07-06';
-  // For dates before cycle scoring started, cycle = challenge start (no resets possible)
-  if (dateStr < CYCLE_SCORING_START) {
+  const weeks = getWeeks();
+  // Find the week that contains dateStr; only count weeks ending before it starts.
+  const currentWeek = weeks.find(w => w.start <= dateStr && w.end >= dateStr);
+  const currentWeekStart = currentWeek ? currentWeek.start : dateStr;
+  const completedWeeks = weeks.filter(w => w.end < currentWeekStart);
+  if (completedWeeks.length === 0) {
     _cycleStartCache[dateStr] = START_DATE;
     return START_DATE;
   }
-  const weeks = getWeeks();
-  // Only count weeks that ended before CYCLE_SCORING_START to avoid circularity
-  const completedWeeks = weeks.filter(w => w.end < CYCLE_SCORING_START);
   let cumWins = Object.fromEntries(USERS.map(u => [u.username, 0]));
   let cycleStartWeekIdx = 0;
   for (let i = 0; i < completedWeeks.length; i++) {
@@ -1848,7 +1850,9 @@ function getCycleStartForDate(dateStr) {
       cycleStartWeekIdx = i + 1;
     }
   }
-  const result = cycleStartWeekIdx < completedWeeks.length ? completedWeeks[cycleStartWeekIdx].weekStart : START_DATE;
+  const result = cycleStartWeekIdx < completedWeeks.length
+    ? completedWeeks[cycleStartWeekIdx].start
+    : START_DATE;
   _cycleStartCache[dateStr] = result;
   return result;
 }
