@@ -1264,7 +1264,8 @@
         <div id="studyChartArea"></div>
       </div>
       <div class="card" style="padding:14px;">
-        <div class="card-title">🏆 All-Time Weekly Wins</div>
+        <div id="studyPastCycles"></div>
+        <div class="card-title">🏆 This Cycle Weekly Wins</div>
         <div class="awards-tally" id="studyTally"></div>
       </div>
       <div class="card" style="padding:14px;">
@@ -3302,6 +3303,31 @@ const STUDY_USERS = ['Vikas', 'Dushyant'];
 const STUDY_COLORS = { Vikas: '#7c5cfc', Dushyant: '#ff6b35' };
 let studyLogState = { hours: null }; // hours = 0..8
 
+// Study cycles: 15th→14th monthly; Cycle 1 started Jun 14 (launch date)
+const STUDY_CYCLE_STARTS = ['2026-06-14','2026-07-15','2026-08-15','2026-09-15','2026-10-15','2026-11-15','2026-12-15'];
+const STUDY_CYCLE_WINNERS = ['Dushyant']; // indexed by cycle number - 1
+
+function getCurrentStudyCycle() {
+  const today = todayStr();
+  let cycleNum = 1, cycleStart = STUDY_CYCLE_STARTS[0], cycleEnd = END_DATE;
+  for (let i = STUDY_CYCLE_STARTS.length - 1; i >= 0; i--) {
+    if (today >= STUDY_CYCLE_STARTS[i]) {
+      cycleNum = i + 1;
+      cycleStart = STUDY_CYCLE_STARTS[i];
+      const nextStart = STUDY_CYCLE_STARTS[i + 1];
+      if (nextStart) {
+        const d = new Date(nextStart + 'T00:00:00');
+        d.setDate(d.getDate() - 1);
+        cycleEnd = localDateStr(d);
+      } else {
+        cycleEnd = END_DATE;
+      }
+      break;
+    }
+  }
+  return { cycleNum, cycleStart, cycleEnd };
+}
+
 function getStudyData() {
   if (!appData._study) appData._study = {};
   return appData._study;
@@ -3327,10 +3353,11 @@ function studyPointsLabel(hours) {
 }
 
 function getStudyTotal(username) {
+  const { cycleStart } = getCurrentStudyCycle();
   const log = getStudyLog(username);
   const yesterday = yesterdayStr();
-  if (yesterday < STUDY_START) return 0;
-  const dates = getDateRange(STUDY_START, yesterday);
+  if (yesterday < cycleStart) return 0;
+  const dates = getDateRange(cycleStart, yesterday);
   let total = 0;
   dates.forEach(d => {
     const entry = log[d];
@@ -3404,9 +3431,12 @@ function renderStudyHero() {
 
   const ptsColor = (pts) => pts >= 0 ? '#6ee7b7' : '#fca5a5';
 
+  const { cycleNum, cycleStart: cs, cycleEnd: ce } = getCurrentStudyCycle();
+  const cycleLabel = `Cycle ${cycleNum} · ${formatDate(cs).replace(/\w+,\s/, '')} → ${formatDate(ce).replace(/\w+,\s/, '')}`;
+
   document.getElementById('studyHero').innerHTML = `
     <div class="study-hero">
-      <div class="study-hero-label">📚 Productivity Battle · Jun 14 → Dec 31</div>
+      <div class="study-hero-label">📚 Productivity Battle · ${cycleLabel}</div>
       <div class="study-vs">
         <div class="study-player">
           <div class="study-player-avatar" style="background:${STUDY_COLORS[v]}">${v[0]}</div>
@@ -3435,7 +3465,8 @@ function renderStudyLogArea() {
   if (isReadonly) {
     // Show both players' yesterday entries
     const yesterday = yesterdayStr();
-    if (yesterday < STUDY_START) { el.innerHTML = ''; return; }
+    const { cycleStart: cs2 } = getCurrentStudyCycle();
+    if (yesterday < cs2) { el.innerHTML = ''; return; }
     el.innerHTML = STUDY_USERS.map(u => {
       const entry = getStudyLog(u)[yesterday];
       const pts = entry !== undefined ? calcStudyPoints(entry.hours) : -20;
@@ -3461,10 +3492,11 @@ function renderStudyLogArea() {
   if (!STUDY_USERS.includes(currentUser)) { el.innerHTML = ''; return; }
 
   const yesterday = yesterdayStr();
-  if (yesterday < STUDY_START) {
+  const { cycleStart: cs3 } = getCurrentStudyCycle();
+  if (yesterday < cs3) {
     el.innerHTML = `<div class="card" style="padding:18px;text-align:center;color:var(--muted);">
       <div style="font-size:28px;margin-bottom:8px;">⏳</div>
-      <div style="font-weight:600;font-size:14px;">Study tracking starts Jun 14, 2026</div>
+      <div style="font-weight:600;font-size:14px;">New cycle starts ${formatDate(cs3).replace(/\w+,\s/, '')}</div>
     </div>`;
     return;
   }
@@ -3536,11 +3568,12 @@ function submitStudyLog() {
 function renderStudyChart() {
   const el = document.getElementById('studyChartArea');
   const yesterday = yesterdayStr();
-  if (yesterday < STUDY_START) {
-    el.innerHTML = `<p style="color:var(--muted);font-size:13px;text-align:center;padding:20px 0">Chart will appear once logging starts on Jun 14.</p>`;
+  const { cycleStart } = getCurrentStudyCycle();
+  if (yesterday < cycleStart) {
+    el.innerHTML = `<p style="color:var(--muted);font-size:13px;text-align:center;padding:20px 0">Chart will appear once logging starts for this cycle.</p>`;
     return;
   }
-  const dates = getDateRange(STUDY_START, yesterday);
+  const dates = getDateRange(cycleStart, yesterday);
   if (!dates.length) { el.innerHTML = ''; return; }
 
   const series = STUDY_USERS.map(u => {
@@ -3617,9 +3650,34 @@ function renderStudyChart() {
 function renderStudyAwards() {
   const weeks = getStudyWeeks();
   const today = todayStr();
+  const { cycleStart } = getCurrentStudyCycle();
   const tally = { Vikas: 0, Dushyant: 0 };
 
-  weeks.filter(w => w.end < today).forEach(w => {
+  // Past cycle winner banners
+  const pastCycleHtml = STUDY_CYCLE_WINNERS.map((winner, i) => {
+    const cStart = STUDY_CYCLE_STARTS[i];
+    const cEndDate = new Date(STUDY_CYCLE_STARTS[i + 1] + 'T00:00:00');
+    cEndDate.setDate(cEndDate.getDate() - 1);
+    const cEnd = localDateStr(cEndDate);
+    const loser = STUDY_USERS.find(u => u !== winner);
+    const color = STUDY_COLORS[winner];
+    return `
+      <div style="background:rgba(255,107,53,0.08);border:1px solid rgba(255,107,53,0.25);border-radius:12px;padding:14px 16px;margin-bottom:14px;">
+        <div style="font-size:11px;font-weight:700;letter-spacing:.5px;color:var(--muted);margin-bottom:8px;">STUDY CYCLE ${i+1} · ${formatDate(cStart).replace(/\w+,\s/, '')} – ${formatDate(cEnd).replace(/\w+,\s/, '')}</div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <div style="width:36px;height:36px;border-radius:50%;background:${color};display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;color:#fff">${winner[0]}</div>
+          <div>
+            <div style="font-size:15px;font-weight:800;color:${color}">🏆 ${winner} won Cycle ${i+1}!</div>
+            <div style="font-size:12px;color:var(--muted);margin-top:2px;">${loser} is gearing up for a comeback</div>
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+
+  const pastCycleEl = document.getElementById('studyPastCycles');
+  if (pastCycleEl) pastCycleEl.innerHTML = pastCycleHtml;
+
+  weeks.filter(w => w.start >= cycleStart && w.end < today).forEach(w => {
     const scores = STUDY_USERS.map(u => ({ u, s: getStudyWeekScore(u, w.start, w.end) }));
     if (scores.some(x => x.s === null)) return;
     const max = Math.max(...scores.map(x => x.s));
@@ -3648,10 +3706,11 @@ function renderStudyAwards() {
 function renderStudyWeeks() {
   const weeks = getStudyWeeks();
   const today = todayStr();
-  const visible = weeks.filter(w => w.start <= today).reverse();
+  const { cycleStart } = getCurrentStudyCycle();
+  const visible = weeks.filter(w => w.start >= cycleStart && w.start <= today).reverse();
 
   if (!visible.length) {
-    document.getElementById('studyWeeksList').innerHTML = `<div class="no-weeks">Study tracking starts Jun 14!</div>`;
+    document.getElementById('studyWeeksList').innerHTML = `<div class="no-weeks">New cycle starts ${formatDate(cycleStart).replace(/\w+,\s/, '')}!</div>`;
     return;
   }
 
