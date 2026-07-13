@@ -1850,9 +1850,17 @@ function getCycleStartForDate(dateStr) {
       cycleStartWeekIdx = i + 1;
     }
   }
-  const result = cycleStartWeekIdx < completedWeeks.length
-    ? completedWeeks[cycleStartWeekIdx].start
-    : START_DATE;
+  let result;
+  if (cycleStartWeekIdx < completedWeeks.length) {
+    result = completedWeeks[cycleStartWeekIdx].start;
+  } else if (cycleStartWeekIdx > 0) {
+    // Reset happened at/after the last completed week — new cycle is the next week
+    const lastEnd = completedWeeks[completedWeeks.length - 1].end;
+    const nextWeek = weeks.find(w => w.start > lastEnd);
+    result = nextWeek ? nextWeek.start : START_DATE;
+  } else {
+    result = START_DATE;
+  }
   _cycleStartCache[dateStr] = result;
   return result;
 }
