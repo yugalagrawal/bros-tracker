@@ -1694,13 +1694,13 @@ function _calcDayScoreNew(entry, username, dateStr) {
   const isMandatoryRest = entry.gym && (() => {
     if (dateStr < '2026-06-29') return false;
     const log = getUserLog(username);
-    // Check days BEFORE today only — today's own entry must not affect the check
-    // (avoids preview/save mismatch where today isn't saved yet during preview)
+    // Use cycle start so consecutive count resets with each new cycle
+    const cycleStart = dateStr >= '2026-07-06' ? getCycleStartForDate(dateStr) : START_DATE;
     if (dateStr >= '2026-07-13') {
-      const prev5 = getDateRange(START_DATE, dateStr).slice(-6, -1);
+      const prev5 = getDateRange(cycleStart, dateStr).slice(-6, -1);
       return prev5.length === 5 && prev5.every(d => log[d] && log[d].gym);
     }
-    const prev6 = getDateRange(START_DATE, dateStr).slice(-7, -1);
+    const prev6 = getDateRange(cycleStart, dateStr).slice(-7, -1);
     return prev6.length === 6 && prev6.every(d => log[d] && log[d].gym);
   })();
 
@@ -2802,11 +2802,12 @@ function buildPointsPreview() {
   const isMandatoryRest = logState.gym === true && (() => {
     if (logDate < '2026-06-29') return false;
     const log = getUserLog(currentUser);
+    const cycleStart = logDate >= '2026-07-06' ? getCycleStartForDate(logDate) : START_DATE;
     if (logDate >= '2026-07-13') {
-      const prev5 = getDateRange(START_DATE, logDate).slice(-6, -1);
+      const prev5 = getDateRange(cycleStart, logDate).slice(-6, -1);
       return prev5.length === 5 && prev5.every(d => log[d] && log[d].gym);
     }
-    const prev6 = getDateRange(START_DATE, logDate).slice(-7, -1);
+    const prev6 = getDateRange(cycleStart, logDate).slice(-7, -1);
     return prev6.length === 6 && prev6.every(d => log[d] && log[d].gym);
   })();
 
