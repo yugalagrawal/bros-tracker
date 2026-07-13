@@ -3311,7 +3311,14 @@ function getCurrentStudyCycle() {
   const today = todayStr();
   let cycleNum = 1, cycleStart = STUDY_CYCLE_STARTS[0], cycleEnd = END_DATE;
   for (let i = STUDY_CYCLE_STARTS.length - 1; i >= 0; i--) {
-    if (today >= STUDY_CYCLE_STARTS[i]) {
+    // Show the new cycle starting on the day before it begins (the 14th),
+    // so the winner banner + reset are visible on transition day.
+    const detectionDate = i === 0 ? STUDY_CYCLE_STARTS[0] : (() => {
+      const d = new Date(STUDY_CYCLE_STARTS[i] + 'T00:00:00');
+      d.setDate(d.getDate() - 1);
+      return localDateStr(d);
+    })();
+    if (today >= detectionDate) {
       cycleNum = i + 1;
       cycleStart = STUDY_CYCLE_STARTS[i];
       const nextStart = STUDY_CYCLE_STARTS[i + 1];
