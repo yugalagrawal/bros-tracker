@@ -1242,7 +1242,7 @@
         <div class="card-title">📅 Challenge Period</div>
         <div class="rules-item"><span class="ri-label">Start Date</span><span style="font-weight:700;">June 1, 2026</span></div>
         <div class="rules-item"><span class="ri-label">End Date</span><span style="font-weight:700;">Dec 31, 2026</span></div>
-        <div class="rules-item"><span class="ri-label">Total Days</span><span style="font-weight:700;">214 days</span></div>
+        <div class="rules-item"><span class="ri-label">Days of Challenge</span><span style="font-weight:700;" id="challengeDaysProgress"></span></div>
         <div style="margin-top:10px;text-align:center;font-size:15px;font-weight:700;color:var(--gold);letter-spacing:.3px;">2027 will be our Year 🌟</div>
       </div>
 
@@ -2379,6 +2379,7 @@ function renderAll() {
   renderLogForm();
   renderHistory();
   renderParticipants();
+  renderChallengeDaysProgress();
   // Re-render study tab if it's active
   const studySection = document.getElementById('tab-study');
   if (studySection && studySection.classList.contains('active')) renderStudyTab();
@@ -3281,6 +3282,17 @@ function adminResetPassword(username) {
   resetUserPassword(username);
   renderAdminPanel();
   showToast(`${username}'s password reset to default ✅`, 'success');
+}
+
+// ── CHALLENGE DAYS PROGRESS ──
+function renderChallengeDaysProgress() {
+  const el = document.getElementById('challengeDaysProgress');
+  if (!el) return;
+  const total = getDateRange(START_DATE, END_DATE).length;
+  const today = todayStr();
+  const elapsed = today > END_DATE ? total : today < START_DATE ? 0 : getDateRange(START_DATE, today).length;
+  const pct = Math.round((elapsed / total) * 100);
+  el.textContent = `${elapsed} / ${total} days (${pct}%)`;
 }
 
 // ── PARTICIPANTS ──
