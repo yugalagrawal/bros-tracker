@@ -1617,7 +1617,7 @@ function goodDayStreakOnDay(username, dateStr) {
         continue;
       }
       const activityOk = d < '2026-06-26' || e.activity === 'Yes';
-      const isGood = activityOk && proteinGoodDay(e.protein, d) && (e.badHabits || []).length === 0;
+      const isGood = activityOk && proteinGoodDay(e.protein, d) && (e.badHabits || []).length === 0 && (d < '2026-07-20' || e.productive === true);
       if (isGood) streak++;
       else break;
     }
@@ -1728,7 +1728,7 @@ function _calcDayScoreNew(entry, username, dateStr) {
   });
 
   const activityOk = dateStr < '2026-06-26' || entry.activity === 'Yes';
-  let cleanSheet = entry.gym && activityOk && proteinGoodDay(entry.protein, dateStr) && (entry.badHabits || []).length === 0;
+  let cleanSheet = entry.gym && activityOk && proteinGoodDay(entry.protein, dateStr) && (entry.badHabits || []).length === 0 && (dateStr < '2026-07-20' || entry.productive === true);
   if (cleanSheet && (dateStr < '2026-07-13' || !isMandatoryRest)) { pos += 4; notes.push({ label: 'Good Day ⭐', pts: 4, bonus: true }); }
 
   if (entry.gym) {
@@ -1907,7 +1907,7 @@ function calcCycleGoodDayStreak(username, upToDate, cycleStart) {
       if (!restOk) break;
       continue;
     }
-    const isGood = e.activity === 'Yes' && proteinGoodDay(e.protein, d) && (e.badHabits || []).length === 0;
+    const isGood = e.activity === 'Yes' && proteinGoodDay(e.protein, d) && (e.badHabits || []).length === 0 && (d < '2026-07-20' || e.productive === true);
     if (isGood) streak++;
     else break;
   }
@@ -2831,7 +2831,7 @@ function buildPointsPreview() {
     neg += Math.abs(pts); rows += row(`${badIcon(b)} ${b}`, `${pts}`, 'neg');
   });
 
-  const goodDay = logState.gym === true && (logDate < '2026-07-13' || !isMandatoryRest) && logState.activity === 'Yes' && proteinGoodDay(logState.protein, logDate) && logState.badHabits.length === 0;
+  const goodDay = logState.gym === true && (logDate < '2026-07-13' || !isMandatoryRest) && logState.activity === 'Yes' && proteinGoodDay(logState.protein, logDate) && logState.badHabits.length === 0 && (logDate < '2026-07-20' || logState.productive === true);
   if (goodDay) { pos += 4; rows += row('⭐ Good Day Bonus', '+4', 'bonus'); }
 
   if (logDate >= '2026-07-13' && logState.productive === true) { pos += 3; rows += row('🧠 Productive Day', '+3', 'pos'); }
