@@ -1724,6 +1724,11 @@ function _calcDayScoreLegacy(entry, username, dateStr) {
 function _calcDayScoreNew(entry, username, dateStr) {
   let pos = 0, neg = 0, notes = [];
 
+  // One-time bounty: Yugal only, Mon Jul 20 only.
+  if (username === 'Yugal' && dateStr === '2026-07-20') {
+    pos += 70; notes.push({ label: 'Bounty 🎁', pts: 70, bonus: true });
+  }
+
   const isMandatoryRest = entry.gym && (() => {
     if (dateStr < '2026-06-29') return false;
     const log = getUserLog(username);
