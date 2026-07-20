@@ -1513,6 +1513,41 @@ function goodDayStreakOnDayLegacy(username, dateStr) {
   return streak;
 }
 
+// Rolling 5-of-7 streak count over `dates` (oldest→newest, already scoped to
+// whatever cycle/era applies). Finds the most recent 7-day window that failed
+// the 5-of-7 rule. If that failure is purely historical — a later window
+// (closer to upToDate) has since satisfied the rule again — recount gym days
+// from the failing window's start onward; this intentionally keeps crediting
+// gym days from before an already-resolved failure (see e.g. "window
+// Jun30–Jul6 fails but Jul5+Jul6 are gym days → streak = 2").
+// But if the FAILING window is the most recent one (its end is the last date
+// in `dates`), the violation is live right now, not historical — recounting
+// from its start would still credit gym days from before this ongoing miss
+// streak, which is exactly what silently kept Yugal's streak reading 4 for
+// several days in a row (both the cycle streak and the all-time streak) while
+// he wasn't going to the gym at all. In that case, trust only the actual
+// trailing consecutive gym run ending at the last date, which correctly
+// reads 0 once the most recent days are genuine misses.
+function _rollingGymStreak(dates, log) {
+  let lastFailIdx = -1;
+  for (let i = 6; i < dates.length; i++) {
+    const window = dates.slice(i - 6, i + 1);
+    const gymCount = window.filter(d => log[d] && log[d].gym).length;
+    if (gymCount < 5) lastFailIdx = i;
+  }
+  if (lastFailIdx === -1) return dates.filter(d => log[d] && log[d].gym).length;
+  if (lastFailIdx === dates.length - 1) {
+    let streak = 0;
+    for (let i = dates.length - 1; i >= 0; i--) {
+      if (log[dates[i]] && log[dates[i]].gym) streak++;
+      else break;
+    }
+    return streak;
+  }
+  const windowStart = lastFailIdx - 6;
+  return dates.slice(windowStart).filter(d => log[d] && log[d].gym).length;
+}
+
 // Returns { streak, streakStartDate }.
 // Pre-Jun 22: legacy rest-day system. Jun 22+: rolling 5-of-7 applied ONLY to Jun 22+ dates
 // so pre-Jun 22 history is never retroactively invalidated.
@@ -1558,12 +1593,9 @@ function calcGymStreak(username, upToDate) {
     const startIdx = Math.max(0, allDates.length - totalStreak);
     return { streak: totalStreak, streakStartDate: allDates[startIdx] || upToDate };
   } else {
-    // Count gym days from the START of the last failing window onwards.
-    // e.g. window Jun30–Jul6 fails but Jul5+Jul6 are gym days → streak = 2.
-    const windowStart = Math.max(0, lastFailIdx - 6);
-    const postFailDates = newDates.slice(windowStart);
-    const streak = postFailDates.filter(d => log[d] && log[d].gym).length;
-    return { streak, streakStartDate: newDates[windowStart] || upToDate };
+    const streak = _rollingGymStreak(newDates, log);
+    const startIdx = Math.max(0, newDates.length - streak);
+    return { streak, streakStartDate: newDates[startIdx] || upToDate };
   }
 }
 
@@ -1876,18 +1908,7 @@ function getCycleStartDate() {
 function calcCycleGymStreak(username, upToDate, cycleStart) {
   if (!cycleStart || cycleStart <= START_DATE) return calcGymStreak(username, upToDate).streak;
   const log = getUserLog(username);
-  const dates = getDateRange(cycleStart, upToDate);
-  let lastFailIdx = -1;
-  for (let i = 6; i < dates.length; i++) {
-    const window = dates.slice(i - 6, i + 1);
-    const gymCount = window.filter(d => log[d] && log[d].gym).length;
-    if (gymCount < 5) lastFailIdx = i;
-  }
-  if (lastFailIdx === -1) {
-    return dates.filter(d => log[d] && log[d].gym).length;
-  }
-  const windowStart = Math.max(0, lastFailIdx - 6);
-  return dates.slice(windowStart).filter(d => log[d] && log[d].gym).length;
+  return _rollingGymStreak(getDateRange(cycleStart, upToDate), log);
 }
 
 // Good day streak computed fresh from a given cycle start date.
