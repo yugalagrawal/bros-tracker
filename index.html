@@ -1513,22 +1513,15 @@ function goodDayStreakOnDayLegacy(username, dateStr) {
   return streak;
 }
 
-// Rolling 5-of-7 streak count over `dates` (oldest→newest, already scoped to
-// whatever cycle/era applies). Finds the most recent 7-day window that failed
-// the 5-of-7 rule. If that failure is purely historical — a later window
-// (closer to upToDate) has since satisfied the rule again — recount gym days
-// from the failing window's start onward; this intentionally keeps crediting
-// gym days from before an already-resolved failure (see e.g. "window
-// Jun30–Jul6 fails but Jul5+Jul6 are gym days → streak = 2").
-// But if the FAILING window is the most recent one (its end is the last date
-// in `dates`), the violation is live right now, not historical — recounting
-// from its start would still credit gym days from before this ongoing miss
-// streak, which is exactly what silently kept Yugal's streak reading 4 for
-// several days in a row (both the cycle streak and the all-time streak) while
-// he wasn't going to the gym at all. In that case, trust only the actual
-// trailing consecutive gym run ending at the last date, which correctly
-// reads 0 once the most recent days are genuine misses.
-function _rollingGymStreak(dates, log) {
+// Rolling 5-of-7 streak count (backward-scan). Finds the most recent 7-day
+// window that failed the 5-of-7 rule. If that failure is the most recent
+// window (its end is the last date in `dates`), the violation is live right
+// now — trust only the actual trailing consecutive gym run. Otherwise the
+// failure is historical (a later window has since recovered), so recount gym
+// days from the failing window's start onward. This is the exact logic
+// already live in production up through Jul 23 — kept verbatim so no past
+// date's displayed streak ever changes.
+function _rollingGymStreakOld(dates, log) {
   let lastFailIdx = -1;
   for (let i = 6; i < dates.length; i++) {
     const window = dates.slice(i - 6, i + 1);
@@ -1547,6 +1540,41 @@ function _rollingGymStreak(dates, log) {
   const windowStart = lastFailIdx - 6;
   return dates.slice(windowStart).filter(d => log[d] && log[d].gym).length;
 }
+
+// Forward-simulated rolling 5-of-7 streak over `dates` (oldest→newest).
+// `anchor` marks the start of the current grace-period-eligible run. The
+// 5-of-7 rule is only evaluated once at least 7 days have elapsed since the
+// anchor — exactly like a brand new cycle gets a 7-day grace period before it
+// can be judged. If that evaluation fails, the anchor moves to the day the
+// failure was confirmed (not the day after) — that day becomes day one of a
+// fresh restart, so if it's itself a gym day it's credited immediately
+// instead of being withheld an extra day. This walk-forward-and-reset
+// approach (rather than scanning backward for the single most recent failing
+// window and recounting from its start) is what correctly keeps a brand new
+// 1-day streak alive through a single subsequent miss instead of zeroing it
+// immediately — the failure can't even be evaluated yet, since the fresh
+// restart hasn't accumulated 7 days. In effect from Jul 24 onward only (see
+// GYM_STREAK_GRACE_FIX below) so no date before it is recomputed differently
+// than what was already shown.
+// Returns { streak, anchorIdx } — anchorIdx is the index into `dates` where
+// the current run began.
+function _rollingGymStreakForward(dates, log) {
+  let anchor = 0;
+  for (let i = 0; i < dates.length; i++) {
+    if (i - anchor + 1 >= 7) {
+      const window = dates.slice(i - 6, i + 1);
+      const gymCount = window.filter(d => log[d] && log[d].gym).length;
+      if (gymCount < 5) anchor = i;
+    }
+  }
+  const streak = dates.slice(anchor).filter(d => log[d] && log[d].gym).length;
+  return { streak, anchorIdx: anchor };
+}
+
+// The day the fresh-restart-aware forward simulation took over. Everything
+// before it keeps using _rollingGymStreakOld unchanged, so history never
+// silently reshuffles — only Jul 24 onward behaves differently.
+const GYM_STREAK_GRACE_FIX = '2026-07-24';
 
 // Returns { streak, streakStartDate }.
 // Pre-Jun 22: legacy rest-day system. Jun 22+: rolling 5-of-7 applied ONLY to Jun 22+ dates
@@ -1571,32 +1599,41 @@ function calcGymStreak(username, upToDate) {
     return { streak, streakStartDate: dates[startIdx] || upToDate };
   }
 
-  // Jun 22+: get legacy base, then rolling window on Jun 22+ dates only
   const legacyBase = calcGymStreakLegacy(username, '2026-06-21');
-  const newDates = getDateRange(TRANSITION, upToDate);
 
-  let lastFailIdx = -1;
-  for (let i = 6; i < newDates.length; i++) {
-    const window = newDates.slice(i - 6, i + 1);
-    const gymCount = window.filter(d => log[d] && log[d].gym).length;
-    if (gymCount < 5) lastFailIdx = i;
-  }
-
-  if (lastFailIdx === -1) {
-    // No failure in new era — carry legacy forward.
-    // Grace period (<7 new dates): rolling window can't fire yet, so only count
-    // actual gym days (a no-gym day doesn't add to the count).
-    // Once 7+ new dates exist the rolling window has already validated them.
-    const newCount = newDates.filter(d => log[d] && log[d].gym).length;
-    const totalStreak = legacyBase + newCount;
-    const allDates = getDateRange(START_DATE, upToDate);
-    const startIdx = Math.max(0, allDates.length - totalStreak);
-    return { streak: totalStreak, streakStartDate: allDates[startIdx] || upToDate };
-  } else {
-    const streak = _rollingGymStreak(newDates, log);
+  if (upToDate < GYM_STREAK_GRACE_FIX) {
+    // Jun 22+: get legacy base, then rolling window on Jun 22+ dates only
+    const newDates = getDateRange(TRANSITION, upToDate);
+    let lastFailIdx = -1;
+    for (let i = 6; i < newDates.length; i++) {
+      const window = newDates.slice(i - 6, i + 1);
+      const gymCount = window.filter(d => log[d] && log[d].gym).length;
+      if (gymCount < 5) lastFailIdx = i;
+    }
+    if (lastFailIdx === -1) {
+      const newCount = newDates.filter(d => log[d] && log[d].gym).length;
+      const totalStreak = legacyBase + newCount;
+      const allDates = getDateRange(START_DATE, upToDate);
+      const startIdx = Math.max(0, allDates.length - totalStreak);
+      return { streak: totalStreak, streakStartDate: allDates[startIdx] || upToDate };
+    }
+    const streak = _rollingGymStreakOld(newDates, log);
     const startIdx = Math.max(0, newDates.length - streak);
     return { streak, streakStartDate: newDates[startIdx] || upToDate };
   }
+
+  // Jul 24+: freeze everything through Jul 23 exactly as already displayed,
+  // then continue with the fresh-restart-aware simulation from Jul 24 on.
+  const baseline = calcGymStreak(username, '2026-07-23').streak;
+  const sinceDates = getDateRange(GYM_STREAK_GRACE_FIX, upToDate);
+  const { streak, anchorIdx } = _rollingGymStreakForward(sinceDates, log);
+  if (anchorIdx === 0) {
+    const totalStreak = baseline + streak;
+    const allDates = getDateRange(START_DATE, upToDate);
+    const startIdx = Math.max(0, allDates.length - totalStreak);
+    return { streak: totalStreak, streakStartDate: allDates[startIdx] || upToDate };
+  }
+  return { streak, streakStartDate: sinceDates[anchorIdx] || upToDate };
 }
 
 // Debug: call debugStreak('Vikas') from browser console
@@ -1913,7 +1950,17 @@ function getCycleStartDate() {
 function calcCycleGymStreak(username, upToDate, cycleStart) {
   if (!cycleStart || cycleStart <= START_DATE) return calcGymStreak(username, upToDate).streak;
   const log = getUserLog(username);
-  return _rollingGymStreak(getDateRange(cycleStart, upToDate), log);
+
+  if (upToDate < GYM_STREAK_GRACE_FIX) {
+    return _rollingGymStreakOld(getDateRange(cycleStart, upToDate), log);
+  }
+
+  const baseline = cycleStart < GYM_STREAK_GRACE_FIX
+    ? _rollingGymStreakOld(getDateRange(cycleStart, '2026-07-23'), log)
+    : 0;
+  const sinceStart = cycleStart < GYM_STREAK_GRACE_FIX ? GYM_STREAK_GRACE_FIX : cycleStart;
+  const { streak, anchorIdx } = _rollingGymStreakForward(getDateRange(sinceStart, upToDate), log);
+  return anchorIdx === 0 ? baseline + streak : streak;
 }
 
 // Good day streak computed fresh from a given cycle start date.
