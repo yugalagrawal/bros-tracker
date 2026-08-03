@@ -1560,23 +1560,41 @@ function _rollingGymStreakOld(dates, log) {
 // the current run began.
 function _rollingGymStreakForward(dates, log) {
   let anchor = 0;
+  // Once a run is confirmed dead with no gym day to fall back on, the streak
+  // sits at 0 and stays "pending" — no new grace period starts ticking until
+  // the user actually logs gym again, so idle miss days in between never eat
+  // into the next run's 7-day budget.
+  let pending = false;
   for (let i = 0; i < dates.length; i++) {
-    if (i - anchor + 1 >= 7) {
-      const window = dates.slice(i - 6, i + 1);
-      const gymCount = window.filter(d => log[d] && log[d].gym).length;
-      if (gymCount < 5) {
-        // The failing window can close several days after the miss streak
-        // actually ended (the 7-day grace period delays evaluation). Walk the
-        // anchor back over any trailing consecutive gym days so a run that
-        // already started before the window closed isn't discarded.
-        let a = i;
-        while (a > 0 && log[dates[a - 1]] && log[dates[a - 1]].gym) a--;
+    const isGym = !!(log[dates[i]] && log[dates[i]].gym);
+    if (pending) {
+      if (!isGym) continue;
+      anchor = i; // this gym day becomes day 1 of the fresh run
+      pending = false;
+    }
+    const elapsed = i - anchor + 1;
+    // Once too many misses have piled up that reaching 5 gym days within the
+    // still-open 7-day window is mathematically impossible (gym days so far
+    // + all remaining days in the window < 5), the streak is already dead —
+    // don't wait out the rest of the grace period to admit it.
+    const window = elapsed >= 7 ? dates.slice(i - 6, i + 1) : dates.slice(anchor, i + 1);
+    const gymSoFar = window.filter(d => log[d] && log[d].gym).length;
+    const remaining = elapsed >= 7 ? 0 : 7 - elapsed;
+    if (gymSoFar + remaining < 5) {
+      // The failure can be confirmed several days after the miss streak
+      // actually ended. Walk the anchor back over any trailing consecutive
+      // gym days so a run that already started isn't discarded.
+      let a = i;
+      while (a > 0 && log[dates[a - 1]] && log[dates[a - 1]].gym) a--;
+      if (a === i && !isGym) {
+        pending = true; // nothing to salvage; wait for the next gym day
+      } else {
         anchor = a;
       }
     }
   }
-  const streak = dates.slice(anchor).filter(d => log[d] && log[d].gym).length;
-  return { streak, anchorIdx: anchor };
+  const streak = pending ? 0 : dates.slice(anchor).filter(d => log[d] && log[d].gym).length;
+  return { streak, anchorIdx: pending ? dates.length : anchor };
 }
 
 // The day the fresh-restart-aware forward simulation took over. Everything
