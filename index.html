@@ -1564,7 +1564,15 @@ function _rollingGymStreakForward(dates, log) {
     if (i - anchor + 1 >= 7) {
       const window = dates.slice(i - 6, i + 1);
       const gymCount = window.filter(d => log[d] && log[d].gym).length;
-      if (gymCount < 5) anchor = i;
+      if (gymCount < 5) {
+        // The failing window can close several days after the miss streak
+        // actually ended (the 7-day grace period delays evaluation). Walk the
+        // anchor back over any trailing consecutive gym days so a run that
+        // already started before the window closed isn't discarded.
+        let a = i;
+        while (a > 0 && log[dates[a - 1]] && log[dates[a - 1]].gym) a--;
+        anchor = a;
+      }
     }
   }
   const streak = dates.slice(anchor).filter(d => log[d] && log[d].gym).length;
