@@ -1236,6 +1236,14 @@
             <div style="display:flex;justify-content:space-between;font-size:12px;"><span style="color:var(--muted);">Streak days 31+</span><span class="ri-pts pos">+7 pts</span></div>
           </div>
         </div>
+
+        <div style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:0.5px;padding:14px 0 4px;">✨ SPECIAL POINTS</div>
+        <div class="rules-item" style="flex-direction:column;align-items:flex-start;gap:3px;">
+          <span class="ri-label">One-time bonus every 10th day of a streak (day 10, 20, 30, ...)</span>
+          <span style="font-size:11px;color:var(--muted);padding-left:2px;">Added only to Total Points — never counted in day-wise logs, Cycle points, or Week wins. Counted for everyone starting Aug 17, 2026.</span>
+        </div>
+        <div class="rules-item"><span class="ri-label">🏋️ Gym Streak — every 10th day</span><span class="ri-pts pos">+25 pts</span></div>
+        <div class="rules-item"><span class="ri-label">⭐ Good Day Streak — every 10th day</span><span class="ri-pts pos">+50 pts</span></div>
       </div>
 
       <div class="card">
@@ -1856,7 +1864,7 @@ function getTotalScore(username) {
     const r = calcDayScore(log[d], username, d);
     if (r) total += r.score;
   });
-  return total;
+  return total + calcSpecialPoints(username);
 }
 
 function getCurrentStreak(username) {
@@ -1865,6 +1873,39 @@ function getCurrentStreak(username) {
 
 function getGoodDayStreak(username) {
   return goodDayStreakOnDay(username, lastLoggedDate(username));
+}
+
+// ── SPECIAL POINTS ──
+// One-off milestone bonuses for hitting every 10th day of a streak (10, 20,
+// 30, ...): 25pts for gym streak, 50pts for good day streak. These only ever
+// feed getTotalScore — never calcDayScore/getWeekScore — so they cannot
+// affect week wins or cycles. Starts counting from Aug 17, 2026 for everyone.
+const SPECIAL_POINTS_START = '2026-08-17';
+
+function calcSpecialPoints(username) {
+  const today = todayStr();
+  if (today < SPECIAL_POINTS_START) return 0;
+  const startPrevD = new Date(SPECIAL_POINTS_START + 'T00:00:00');
+  startPrevD.setDate(startPrevD.getDate() - 1);
+  const startPrev = localDateStr(startPrevD);
+
+  let prevGym = gymStreakOnDay(username, startPrev);
+  let prevGood = goodDayStreakOnDay(username, startPrev);
+  let total = 0;
+  getDateRange(SPECIAL_POINTS_START, today).forEach(d => {
+    // A streak value only rises on the day it's actually earned (it holds
+    // flat through grace-period misses and drops to 0 on a break), so
+    // "increased and lands on a multiple of 10" fires exactly once per
+    // milestone, whichever run it belongs to.
+    const gymStreak = gymStreakOnDay(username, d);
+    if (gymStreak > prevGym && gymStreak % 10 === 0) total += 25;
+    prevGym = gymStreak;
+
+    const goodStreak = goodDayStreakOnDay(username, d);
+    if (goodStreak > prevGood && goodStreak % 10 === 0) total += 50;
+    prevGood = goodStreak;
+  });
+  return total;
 }
 
 // ── CYCLE SYSTEM ──
@@ -2595,6 +2636,9 @@ function renderMyStats() {
     <div class="stat-tile">
       <div class="st-val" style="color:var(--accent3)">${gymDays}</div>
       <div class="st-label">Total Gym Days</div>
+      <div style="margin-top:6px;">
+        <span style="font-size:10px;color:var(--muted)">(${loggedDates.length} days logged)</span>
+      </div>
     </div>
     <div class="stat-tile">
       <div class="st-val" style="color:var(--accent2)">${cycleGym}</div>
