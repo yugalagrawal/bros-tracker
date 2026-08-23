@@ -2615,11 +2615,6 @@ function renderTrashTalk() {
 }
 
 function renderMyStats() {
-  const log = getUserLog(currentUser);
-  const allDates = getDateRange(START_DATE, todayStr());
-  const loggedDates = allDates.filter(d => log[d]);
-  const gymDays = loggedDates.filter(d => log[d].gym).length;
-  const total = getTotalScore(currentUser);
   const { streak: gymStreak } = calcGymStreak(currentUser, lastLoggedDate(currentUser));
   const goodDayStreak = getGoodDayStreak(currentUser);
   const cycleGym = getCycleGymStreak(currentUser);
@@ -2628,16 +2623,27 @@ function renderMyStats() {
   const noDrink = getHabitStreak(currentUser, 'Drink');
   const noJunk  = getHabitStreak(currentUser, 'Junk Diet');
 
+  const totalDaysSoFar = getDateRange(START_DATE, yesterdayStr()).length;
+  const brosGymDays = USERS.map(u => {
+    const ulog = getUserLog(u.username);
+    const uLoggedDays = getLoggedDays(u.username);
+    const uGymDays = Object.keys(ulog).filter(d => ulog[d] && ulog[d].gym).length;
+    const weeklyAvg = uLoggedDays > 0 ? (uGymDays / uLoggedDays) * 7 : 0;
+    return { ...u, gymDays: uGymDays, weeklyAvg };
+  });
+
   document.getElementById('myStatsGrid').innerHTML = `
-    <div class="stat-tile">
-      <div class="st-val" style="color:var(--accent)">${total}</div>
-      <div class="st-label">Total Points</div>
-    </div>
-    <div class="stat-tile">
-      <div class="st-val" style="color:var(--accent3)">${gymDays}</div>
-      <div class="st-label">Total Gym Days</div>
-      <div style="margin-top:6px;">
-        <span style="font-size:10px;color:var(--muted)">(${loggedDates.length} days)</span>
+    <div class="stat-tile" style="grid-column:span 2">
+      <div class="st-label">🏋️ Total Gym Days (out of ${totalDaysSoFar} days)</div>
+      <div style="display:flex;justify-content:space-around;align-items:center;width:100%;margin-top:12px;">
+        ${brosGymDays.map((u, i) => `
+          ${i > 0 ? '<div style="width:1px;height:40px;background:var(--border);"></div>' : ''}
+          <div style="text-align:center;">
+            <div style="font-size:26px;font-weight:800;color:${u.color};">${u.gymDays}</div>
+            <div style="font-size:11px;color:var(--muted);margin-top:2px;">${u.username}${u.username === currentUser ? ' (you)' : ''}</div>
+            <div style="font-size:10px;color:var(--muted);margin-top:2px;">${u.weeklyAvg.toFixed(1)}/wk avg</div>
+          </div>
+        `).join('')}
       </div>
     </div>
     <div class="stat-tile">
