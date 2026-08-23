@@ -2630,7 +2630,7 @@ function renderMyStats() {
     const uGymDays = Object.keys(ulog).filter(d => ulog[d] && ulog[d].gym).length;
     const weeklyAvg = uLoggedDays > 0 ? (uGymDays / uLoggedDays) * 7 : 0;
     return { ...u, gymDays: uGymDays, weeklyAvg };
-  });
+  }).sort((a, b) => b.weeklyAvg - a.weeklyAvg);
 
   document.getElementById('myStatsGrid').innerHTML = `
     <div class="stat-tile" style="grid-column:span 2">
