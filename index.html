@@ -1182,11 +1182,16 @@
     <div class="section" id="tab-rules">
       <div class="card">
         <div class="card-title">📋 Scoring Rules</div>
-        <div style="font-size:11px;color:var(--muted);margin-bottom:12px;">Current rules effective from Jul 13, 2026</div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:12px;">Current rules effective from Jul 13, 2026 — Activity tiers updated Aug 24, 2026</div>
 
         <div style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:0.5px;padding:6px 0 4px;">EARN POINTS</div>
         <div class="rules-item"><span class="ri-label">🏋️ Gym / Sports session</span><span class="ri-pts pos">+10 pts</span></div>
-        <div class="rules-item"><span class="ri-label">🏃 Activity — Steps 10k+ or Run 4km+</span><span class="ri-pts pos">+5 pts</span></div>
+        <div class="rules-item"><span class="ri-label">🏃 Activity — 10k Steps/5k Run</span><span class="ri-pts pos">+5 pts</span></div>
+        <div class="rules-item"><span class="ri-label">🏃 Activity — 5k Steps/3k Run</span><span class="ri-pts pos">+3 pts</span></div>
+        <div class="rules-item" style="flex-direction:column;align-items:flex-start;gap:3px;">
+          <span class="ri-label">🏃 Activity — None</span>
+          <span style="font-size:11px;color:var(--muted);padding-left:2px;">0 pts. Tiers effective from Aug 24, 2026 — before that, Activity was a flat +5 pts.</span>
+        </div>
         <div class="rules-item"><span class="ri-label">🧠 Productive Day — study, learn, quality time, fun outside</span><span class="ri-pts pos">+3 pts</span></div>
         <div class="rules-item"><span class="ri-label">⭐ Good Day Bonus — Gym (pts) + Activity + Protein 75g+ + No Bad Habits</span><span class="ri-pts bonus">+4 bonus</span></div>
 
@@ -1486,6 +1491,21 @@ function getPendingApprovalsFor(voter) {
 // ── SCORING ──
 const BAD_PTS = { Smoke: -20, Drink: -30, 'Junk Diet': -10 };
 
+// Activity tiers effective from Aug 24, 2026: 10k Steps/5k Run (+5), 5k Steps/3k Run (+3), None (0)
+const ACTIVITY_TIERS_START = '2026-08-24';
+function activityPts(activity, dateStr) {
+  if (dateStr >= ACTIVITY_TIERS_START) {
+    if (activity === '10k' || activity === 'Yes') return 5; // 'Yes' = pre-tier logs, grandfathered at top tier
+    if (activity === '5k') return 3;
+    return 0;
+  }
+  return activity === 'Yes' ? 5 : 0;
+}
+function activityDone(activity, dateStr) {
+  if (dateStr >= ACTIVITY_TIERS_START) return activity === '10k' || activity === '5k' || activity === 'Yes';
+  return activity === 'Yes';
+}
+
 // Gym streak — rolling 5-out-of-7 window.
 // Streak = days since the last 7-day window that had fewer than 5 gym days.
 // Legacy streak functions (used for scoring dates before Jun 22 2026)
@@ -1715,11 +1735,11 @@ function goodDayStreakOnDay(username, dateStr) {
         // rest day: neutral only if activity done + no bad habits; else break
         if (!e) continue;
         const restOk = d < '2026-06-26'
-          || (e.activity === 'Yes' && (e.badHabits || []).length === 0);
+          || (activityDone(e.activity, d) && (e.badHabits || []).length === 0);
         if (!restOk) break;
         continue;
       }
-      const activityOk = d < '2026-06-26' || e.activity === 'Yes';
+      const activityOk = d < '2026-06-26' || activityDone(e.activity, d);
       const isGood = activityOk && proteinGoodDay(e.protein, d) && (e.badHabits || []).length === 0 && (d < '2026-07-20' || e.productive === true);
       if (isGood) streak++;
       else break;
@@ -1821,7 +1841,8 @@ function _calcDayScoreNew(entry, username, dateStr) {
     }
   }
 
-  if (entry.activity === 'Yes') { pos += 5; notes.push({ label: 'Activity', pts: 5 }); }
+  const actPts = activityPts(entry.activity, dateStr);
+  if (actPts > 0) { pos += actPts; notes.push({ label: `Activity${dateStr >= ACTIVITY_TIERS_START ? ` (${activityLabel(entry)})` : ''}`, pts: actPts }); }
 
   if (dateStr >= '2026-07-13' && entry.productive === true) { pos += 3; notes.push({ label: 'Productive Day 🧠', pts: 3 }); }
 
@@ -1835,7 +1856,7 @@ function _calcDayScoreNew(entry, username, dateStr) {
     const pts = BAD_PTS[b] || -10; neg += Math.abs(pts); notes.push({ label: b, pts });
   });
 
-  const activityOk = dateStr < '2026-06-26' || entry.activity === 'Yes';
+  const activityOk = dateStr < '2026-06-26' || activityDone(entry.activity, dateStr);
   let cleanSheet = entry.gym && activityOk && proteinGoodDay(entry.protein, dateStr) && (entry.badHabits || []).length === 0 && (dateStr < '2026-07-20' || entry.productive === true);
   if (cleanSheet && (dateStr < '2026-07-13' || !isMandatoryRest)) { pos += 4; notes.push({ label: 'Good Day ⭐', pts: 4, bonus: true }); }
 
@@ -2043,11 +2064,11 @@ function calcCycleGoodDayStreak(username, upToDate, cycleStart) {
     const e = log[d];
     if (!e || !e.gym) {
       if (!e) continue;
-      const restOk = e.activity === 'Yes' && (e.badHabits || []).length === 0;
+      const restOk = activityDone(e.activity, d) && (e.badHabits || []).length === 0;
       if (!restOk) break;
       continue;
     }
-    const isGood = e.activity === 'Yes' && proteinGoodDay(e.protein, d) && (e.badHabits || []).length === 0 && (d < '2026-07-20' || e.productive === true);
+    const isGood = activityDone(e.activity, d) && proteinGoodDay(e.protein, d) && (e.badHabits || []).length === 0 && (d < '2026-07-20' || e.productive === true);
     if (isGood) streak++;
     else break;
   }
@@ -2720,7 +2741,7 @@ function renderTodayStatus() {
 
 function activityIcon(a, entry) {
   if (a === 'Sports' && entry && entry.sportsType) return sportsIcon(entry.sportsType);
-  const m = { Running: '🚶', Sports: '⚽', Other: '🎯' };
+  const m = { Running: '🚶', Sports: '⚽', Other: '🎯', '10k': '🏃', '5k': '🚶' };
   return m[a] || '🚶';
 }
 
@@ -2729,6 +2750,8 @@ function activityLabel(entry) {
   if (entry.activity === 'Other' && entry.activityOther) return entry.activityOther;
   if (entry.activity === 'Sports' && entry.sportsType) return entry.sportsType;
   if (entry.activity === 'Running') return 'Walk/Run';
+  if (entry.activity === '10k') return '10k Steps/5k Run';
+  if (entry.activity === '5k') return '5k Steps/3k Run';
   return entry.activity;
 }
 
@@ -2893,10 +2916,16 @@ function buildLogFormHTML() {
     <div class="form-group">
       <label>🏃 Activity Today</label>
       <div class="toggle-group">
+        ${logDate >= ACTIVITY_TIERS_START ? `
+        <button class="toggle-btn ${logState.activity === '10k' ? 'selected-activity' : ''}" onclick="setActivity('10k')">✅ 10k Steps/5k Run</button>
+        <button class="toggle-btn ${logState.activity === '5k' ? 'selected-activity' : ''}" onclick="setActivity('5k')">🟡 5k Steps/3k Run</button>
+        <button class="toggle-btn ${logState.activity === null ? 'selected-no' : ''}" onclick="setActivity(null)">🚫 None</button>
+        ` : `
         <button class="toggle-btn ${logState.activity === 'Yes' ? 'selected-activity' : ''}" onclick="setActivity('Yes')">✅ Yes</button>
         <button class="toggle-btn ${logState.activity === null ? 'selected-no' : ''}" onclick="setActivity(null)">🚫 None</button>
+        `}
       </div>
-      <p style="font-size:11px;color:var(--accent3);background:rgba(99,102,241,0.08);border:1px solid rgba(99,102,241,0.2);border-radius:6px;padding:5px 8px;margin-top:6px;">Select Yes if 10K+ Steps or 4km Running</p>
+      <p style="font-size:11px;color:var(--accent3);background:rgba(99,102,241,0.08);border:1px solid rgba(99,102,241,0.2);border-radius:6px;padding:5px 8px;margin-top:6px;">${logDate >= ACTIVITY_TIERS_START ? '10k Steps/5k Run = +5 pts, 5k Steps/3k Run = +3 pts, None = 0 pts' : 'Select Yes if 10K+ Steps or 4km Running'}</p>
     </div>
 
     <div class="form-group">
@@ -2965,8 +2994,9 @@ function buildPointsPreview() {
   if (logState.gym === true)  { if (!isMandatoryRest) { pos += 10; rows += row('🏋️ Gym', '+10', 'pos'); } else { rows += row('🏋️ Gym (rest day — no pts)', '0', 'neg'); } }
   if (logState.gym === false) { rows += row('🏋️ No Gym', '0', 'neg'); }
 
-  if (logState.activity === 'Yes') {
-    pos += 5; rows += row('🏃 Activity', '+5', 'pos');
+  const actPts = activityPts(logState.activity, logDate);
+  if (actPts > 0) {
+    pos += actPts; rows += row(`🏃 Activity${logDate >= ACTIVITY_TIERS_START ? ` (${activityLabel({ activity: logState.activity })})` : ''}`, `+${actPts}`, 'pos');
   }
 
   if (logState.protein != null) {
@@ -2981,7 +3011,7 @@ function buildPointsPreview() {
     neg += Math.abs(pts); rows += row(`${badIcon(b)} ${b}`, `${pts}`, 'neg');
   });
 
-  const goodDay = logState.gym === true && (logDate < '2026-07-13' || !isMandatoryRest) && logState.activity === 'Yes' && proteinGoodDay(logState.protein, logDate) && logState.badHabits.length === 0 && (logDate < '2026-07-20' || logState.productive === true);
+  const goodDay = logState.gym === true && (logDate < '2026-07-13' || !isMandatoryRest) && activityDone(logState.activity, logDate) && proteinGoodDay(logState.protein, logDate) && logState.badHabits.length === 0 && (logDate < '2026-07-20' || logState.productive === true);
   if (goodDay) { pos += 4; rows += row('⭐ Good Day Bonus', '+4', 'bonus'); }
 
   if (logDate >= '2026-07-13' && logState.productive === true) { pos += 3; rows += row('🧠 Productive Day', '+3', 'pos'); }
