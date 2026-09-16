@@ -1,4 +1,4 @@
-const CACHE = 'bros-tracker-v5';
+const CACHE = 'bros-tracker-v6';
 const ASSETS = ['/', '/index.html'];
 
 // Install — cache the app shell

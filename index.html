@@ -1249,6 +1249,13 @@
         </div>
         <div class="rules-item"><span class="ri-label">🏋️ Gym Streak — every 10th day</span><span class="ri-pts pos">+25 pts</span></div>
         <div class="rules-item"><span class="ri-label">⭐ Good Day Streak — every 10th day</span><span class="ri-pts pos">+50 pts</span></div>
+
+        <div style="font-size:11px;font-weight:700;color:var(--muted);letter-spacing:0.5px;padding:14px 0 4px;">⏰ MISSED LOG PENALTY</div>
+        <div class="rules-item"><span class="ri-label">⏰ Missed Log Penalty — day's edit window closed with nothing ever logged</span><span class="ri-pts neg">−63 pts</span></div>
+        <div class="rules-item" style="flex-direction:column;align-items:flex-start;gap:3px;">
+          <span class="ri-label">Effective from Sep 14, 2026</span>
+          <span style="font-size:11px;color:var(--muted);padding-left:2px;">Each day can only be logged up to the following day (grace period). Once that window passes with no entry at all, it's locked in as a Missed Log Penalty in Total Points, Weekly Points, and Log History.</span>
+        </div>
       </div>
 
       <div class="card">
@@ -1493,6 +1500,8 @@ const BAD_PTS = { Smoke: -20, Drink: -30, 'Junk Diet': -10 };
 
 // Activity tiers effective from Aug 24, 2026: 10k Steps/5k Run (+5), 5k Steps/3k Run (+3), None (0)
 const ACTIVITY_TIERS_START = '2026-08-24';
+const MISSED_LOG_PENALTY_START = '2026-09-14';
+const MISSED_LOG_PENALTY = -63;
 function activityPts(activity, dateStr) {
   if (dateStr >= ACTIVITY_TIERS_START) {
     if (activity === '10k' || activity === 'Yes') return 5; // 'Yes' = pre-tier logs, grandfathered at top tier
@@ -1766,7 +1775,19 @@ function goodDayStreakOnDay(username, dateStr) {
 }
 
 function calcDayScore(entry, username, dateStr) {
-  if (!entry) return null;
+  if (!entry) {
+    // Log window has closed (day is no longer editable) with nothing ever logged.
+    if (dateStr >= MISSED_LOG_PENALTY_START && dateStr < yesterdayStr()) {
+      return {
+        score: MISSED_LOG_PENALTY,
+        notes: [{ label: 'Missed Log Penalty', pts: MISSED_LOG_PENALTY }],
+        cleanSheet: false,
+        streakActive: false,
+        missed: true,
+      };
+    }
+    return null;
+  }
   if (dateStr < '2026-06-22') return _calcDayScoreLegacy(entry, username, dateStr);
   return _calcDayScoreNew(entry, username, dateStr);
 }
@@ -1881,7 +1902,7 @@ function _calcDayScoreNew(entry, username, dateStr) {
 function getTotalScore(username) {
   const log = getUserLog(username);
   let total = 0;
-  Object.keys(log).forEach(d => {
+  getDateRange(START_DATE, yesterdayStr()).forEach(d => {
     const r = calcDayScore(log[d], username, d);
     if (r) total += r.score;
   });
@@ -2310,7 +2331,7 @@ function renderChart() {
       ...u,
       points: dates.map(d => {
         const log = getUserLog(u.username);
-        const r = log[d] ? calcDayScore(log[d], u.username, d) : null;
+        const r = calcDayScore(log[d], u.username, d);
         cum += r ? r.score : 0;
         return cum;
       }),
@@ -2591,7 +2612,11 @@ function renderLeaderboard() {
     const { streak } = calcGymStreak(u.username, lastLoggedDate(u.username));
     const log = getUserLog(u.username);
     const last7Dates = getDateRange(START_DATE, yesterdayStr()).slice(-7);
-    const last7 = last7Dates.map(d => log[d] ? (log[d].gym ? 'gym' : 'miss') : 'empty');
+    const last7 = last7Dates.map(d => {
+      if (log[d]) return log[d].gym ? 'gym' : 'miss';
+      const r = calcDayScore(undefined, u.username, d);
+      return (r && r.missed) ? 'penalty' : 'empty';
+    });
     const goodDayStreak = getGoodDayStreak(u.username);
     return { ...u, total: getTotalScore(u.username), streak, logged: getLoggedDays(u.username), last7, goodDayStreak };
   }).sort((a, b) => b.total - a.total);
@@ -2621,6 +2646,8 @@ function renderLeaderboard() {
             ? `<span style="font-size:11px;background:rgba(0,229,160,0.15);color:#00c48c;border:1px solid rgba(0,229,160,0.3);border-radius:3px;width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center;font-weight:700;">✓</span>`
             : s === 'miss'
             ? `<span style="font-size:11px;background:rgba(248,81,73,0.1);color:var(--danger);border:1px solid rgba(248,81,73,0.25);border-radius:3px;width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center;font-weight:700;">✗</span>`
+            : s === 'penalty'
+            ? `<span title="Missed Log Penalty (−63)" style="font-size:11px;background:var(--danger);color:#fff;border:1px solid var(--danger);border-radius:3px;width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center;font-weight:700;">⛔</span>`
             : `<span style="border-radius:3px;width:18px;height:18px;display:inline-flex;align-items:center;justify-content:center;background:var(--border);opacity:0.4;"></span>`
           ).join('')}
         </div>
@@ -2842,7 +2869,14 @@ function renderLogForm() {
   }
 
   if (isPastGrace) {
-    area.innerHTML = `
+    const missedResult = calcDayScore(undefined, currentUser, logDate);
+    area.innerHTML = missedResult && missedResult.missed ? `
+      <div style="text-align:center;padding:20px 0;color:var(--muted);">
+        <div style="font-size:32px;margin-bottom:10px;">⏰</div>
+        <div style="font-size:22px;font-weight:800;color:var(--danger);margin-bottom:6px;">${missedResult.score} pts</div>
+        <div style="font-size:14px;font-weight:600;color:var(--danger);margin-bottom:6px;">⏰ Missed Log Penalty</div>
+        <div style="font-size:12px;">Grace period passed with nothing logged — this day can no longer be edited.</div>
+      </div>` : `
       <div style="text-align:center;padding:20px 0;color:var(--muted);">
         <div style="font-size:32px;margin-bottom:10px;">📭</div>
         <div style="font-size:14px;font-weight:600;color:var(--danger);margin-bottom:6px;">Not logged</div>
@@ -2868,7 +2902,13 @@ function renderBroLogs() {
     const initial = getInitial(bro.username);
     let content;
     if (!entry) {
-      content = `<div style="color:var(--muted);font-size:13px;text-align:center;padding:6px 0;">📭 Not logged yet</div>`;
+      const missedResult = calcDayScore(undefined, bro.username, logDate);
+      content = missedResult && missedResult.missed
+        ? `<div style="text-align:center;padding:6px 0;">
+             <div style="font-size:13px;font-weight:700;color:var(--danger);">⏰ Missed Log Penalty</div>
+             <div style="font-size:16px;font-weight:800;color:var(--danger);margin-top:2px;">${missedResult.score} pts</div>
+           </div>`
+        : `<div style="color:var(--muted);font-size:13px;text-align:center;padding:6px 0;">📭 Not logged yet</div>`;
     } else {
       const result = calcDayScore(entry, bro.username, logDate);
       content = `
@@ -3228,10 +3268,8 @@ function getWeekScore(username, weekStart, weekEnd) {
   const dates = getDateRange(weekStart, weekEnd);
   let total = 0;
   dates.forEach(d => {
-    if (log[d]) {
-      const r = calcDayScore(log[d], username, d);
-      if (r) total += r.score;
-    }
+    const r = calcDayScore(log[d], username, d);
+    if (r) total += r.score;
   });
   return total;
 }
@@ -3394,6 +3432,31 @@ function renderHistory() {
     const entry = log[d];
 
     if (!entry) {
+      if (d === yesterday) {
+        return `
+          <div class="history-entry" style="opacity:0.5;">
+            <div class="he-top">
+              <span class="he-date">${formatDate(d)}</span>
+              <span class="he-pts" style="color:var(--muted)">0 pts</span>
+            </div>
+            <div class="he-tags">
+              <span class="tag" style="background:rgba(125,133,144,0.1);color:var(--muted);border:1px dashed var(--border);">📭 Not logged yet</span>
+            </div>
+          </div>`;
+      }
+      const result = calcDayScore(entry, currentUser, d);
+      if (result && result.missed) {
+        return `
+          <div class="history-entry" style="opacity:0.7;">
+            <div class="he-top">
+              <span class="he-date">${formatDate(d)}</span>
+              <span class="he-pts neg">${result.score} pts</span>
+            </div>
+            <div class="he-tags">
+              <span class="tag tag-bad">⏰ Missed Log Penalty</span>
+            </div>
+          </div>`;
+      }
       return `
         <div class="history-entry" style="opacity:0.5;">
           <div class="he-top">
