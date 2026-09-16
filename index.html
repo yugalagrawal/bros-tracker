@@ -2638,8 +2638,7 @@ function renderLeaderboard() {
       <div class="lb-info">
         <div class="lb-name">${u.username} ${u.username === currentUser ? '<span style="font-size:10px;color:var(--muted)">(you)</span>' : ''}</div>
         <div class="lb-sub">
-          ${u.logged} days logged
-          ${u.streak >= 5 ? `&nbsp;<span class="streak-badge">🔥 ${u.streak}-day streak</span>` : u.streak > 0 ? `&nbsp;<span style="font-size:11px;color:var(--muted)">🔥 ${u.streak} days</span>` : ''}
+          ${u.streak >= 5 ? `<span class="streak-badge">🔥 ${u.streak}-day streak</span>` : u.streak > 0 ? `<span style="font-size:11px;color:var(--muted)">🔥 ${u.streak} days</span>` : ''}
         </div>
         <div style="display:flex;gap:3px;margin-top:4px;">
           ${u.last7.map(s => s === 'gym'
